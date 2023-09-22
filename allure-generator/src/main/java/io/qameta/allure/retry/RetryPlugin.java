@@ -29,7 +29,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.entity.TestResult.comparingByTime;
@@ -54,7 +57,7 @@ public class RetryPlugin implements Aggregator2 {
                 .filter(result -> Objects.nonNull(result.getHistoryId()))
                 .collect(Collectors.toMap(TestResult::getHistoryId, Arrays::asList, this::merge));
         byHistory.forEach((historyId, results) ->
-                findLatest(results).ifPresent(addRetries(results)));
+                findTerminalResult(results).ifPresent(addRetries(results)));
     }
 
     private Consumer<TestResult> addRetries(final List<TestResult> results) {
@@ -90,10 +93,23 @@ public class RetryPlugin implements Aggregator2 {
                 .setUid(result.getUid());
     }
 
-    private Optional<TestResult> findLatest(final List<TestResult> results) {
-        return results.stream()
-                .filter(result -> !result.isHidden())
-                .min(comparingByTime());
+    private Optional<TestResult> findTerminalResult(final List<TestResult> results) {
+        return results.stream().reduce(new BinaryOperator<TestResult>() {
+            @Override
+            public TestResult apply(TestResult a, TestResult b) {
+                switch (a.getStatus()) {
+                    case PASSED:
+                        return a;
+                    default:
+                        return b;
+                }
+            }
+
+            @Override
+            public <V> BiFunction<TestResult, TestResult, V> andThen(Function<? super TestResult, ? extends V> after) {
+                return BinaryOperator.super.andThen(after);
+            }
+        });
     }
 
     private List<TestResult> merge(final List<TestResult> first,
