@@ -74,10 +74,6 @@ ospackage {
     os = org.redline_rpm.header.Os.LINUX
     release = "1"
 
-    requires("java8-runtime | java8-runtime-headless | " +
-            "openjdk8-jre-headless | openjdk-8-jre | openjdk-8-jdk | " +
-            "oracle-java8-installer | oracle-java8-installer")
-
     // Remove closureOf when https://github.com/nebula-plugins/gradle-ospackage-plugin/issues/399 is fixed
     from("${pack}/bin", closureOf<CopySpec> {
         into("${dest}/bin")
@@ -99,10 +95,12 @@ ospackage {
 
 val buildDeb by tasks.existing(Deb::class) {
     dependsOn(preparePackageOutput)
+    requires("default-jre-headless")
 }
 
 val buildRpm by tasks.existing(Rpm::class) {
     dependsOn(preparePackageOutput)
+    requires("jre")
 }
 
 publishing {
@@ -133,7 +131,6 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
     implementation("commons-io:commons-io")
-    implementation("org.eclipse.jetty:jetty-server")
     implementation(project(":allure-generator"))
     testImplementation("io.qameta.allure:allure-junit-platform")
     testImplementation("org.apache.commons:commons-lang3")

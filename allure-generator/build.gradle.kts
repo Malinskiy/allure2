@@ -8,9 +8,9 @@ plugins {
 description = "Allure Report Generator"
 
 node {
-    // enforce https
-    distBaseUrl.set("https://nodejs.org/dist")
-    version.set("16.18.0")
+    // repository is declared in root settings.gradle.kts
+    distBaseUrl.set(null as String?)
+    version.set("20.12.1")
     download.set(true)
 }
 
@@ -116,6 +116,7 @@ dependencies {
     testImplementation("io.qameta.allure:allure-junit-platform")
     testImplementation("org.apache.commons:commons-lang3")
     testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit-pioneer:junit-pioneer")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.slf4j:slf4j-simple")

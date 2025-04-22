@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public final class TreeUtils {
                                                 final LabelName... labelNames) {
         return Stream.of(labelNames)
                 .map(testResult::findAllLabels)
+                .map(strings -> strings.stream().distinct().collect(Collectors.toList()))
                 .filter(strings -> !strings.isEmpty())
                 .map(DefaultTreeLayer::new)
                 .collect(Collectors.toList());

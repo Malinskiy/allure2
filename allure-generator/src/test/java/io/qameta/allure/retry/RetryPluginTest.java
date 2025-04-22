@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,12 +63,16 @@ class RetryPluginTest {
                 .containsExactlyInAnyOrder(FIRST_RESULT, SECOND_RESULT);
 
         TestResult lastResult = results.stream()
-                .filter(r -> !r.isHidden()).findFirst().orElseGet(null);
+                .filter(r -> !r.isHidden())
+                .findFirst()
+                .orElseGet(null);
 
         assertThat(Collections.singletonList(lastResult))
                 .as("latest test result")
-                .extracting(TestResult::getName, TestResult::isHidden, TestResult::isFlaky)
-                .containsExactlyInAnyOrder(tuple(LAST_RESULT, false, true));
+                .extracting(TestResult::getName, TestResult::isHidden, TestResult::isFlaky, TestResult::getRetriesCount)
+                .containsExactlyInAnyOrder(
+                        tuple(LAST_RESULT, false, false, 2)
+                );
 
         assertThat(results).as("test results with retries block")
                 .filteredOn(result -> result.hasExtraBlock(RETRY_BLOCK_NAME))
@@ -121,8 +125,10 @@ class RetryPluginTest {
 
         assertThat(results)
                 .filteredOn(result -> !result.isHidden())
-                .extracting(TestResult::getName, TestResult::isFlaky)
-                .containsExactlyInAnyOrder(tuple(SECOND_RESULT, true));
+                .extracting(TestResult::getName, TestResult::isFlaky, TestResult::getRetriesCount)
+                .containsExactlyInAnyOrder(
+                        tuple(SECOND_RESULT, false, 2)
+                );
     }
 
     @Test

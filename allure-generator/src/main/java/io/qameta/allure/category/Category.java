@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,6 +38,6 @@ public class Category implements Serializable {
     protected String messageRegex;
     protected String traceRegex;
     protected List<Status> matchedStatuses = new ArrayList<>();
-    protected boolean flaky;
+    protected Boolean flaky;
 
 }

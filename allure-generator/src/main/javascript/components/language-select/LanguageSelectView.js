@@ -10,7 +10,7 @@ import template from "./LanguageSelectView.hbs";
 @className("language-select popover")
 class LanguageSelectView extends PopoverView {
   initialize() {
-    super.initialize({ position: "right" });
+    super.initialize({ position: "top-right" });
   }
 
   setContent() {
@@ -35,7 +35,7 @@ class LanguageSelectView extends PopoverView {
     const langId = this.$(e.currentTarget).data("id");
     settings.setLanguage(langId);
     i18next.changeLanguage(langId);
-    gtag( "language_change", { language: langId });
+    gtag("language_change", { language: langId });
   }
 }
 

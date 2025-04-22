@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,9 +61,9 @@ public final class TestData {
 
     public static TestResult createTestResult(final Status status) {
         return new TestResult()
-                .setUid(RandomStringUtils.random(10))
-                .setName(RandomStringUtils.random(10))
-                .setHistoryId(RandomStringUtils.random(9))
+                .setUid(RandomStringUtils.insecure().nextAlphanumeric(10))
+                .setName(RandomStringUtils.insecure().nextAlphanumeric(10))
+                .setHistoryId(RandomStringUtils.insecure().nextAlphanumeric(9))
                 .setStatus(status);
     }
 

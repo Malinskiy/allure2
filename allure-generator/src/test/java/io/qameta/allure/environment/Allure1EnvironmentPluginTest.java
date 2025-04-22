@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ class Allure1EnvironmentPluginTest {
     @SafeVarargs
     private List<EnvironmentItem> process(List<String>... results) throws IOException {
         List<LaunchResults> launches = new ArrayList<>();
-        final Configuration configuration = new ConfigurationBuilder().useDefault().build();
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
         Allure1Plugin reader = new Allure1Plugin();
         for (List<String> result : results) {
             Path resultsDirectory = Files.createTempDirectory(temp, "results");

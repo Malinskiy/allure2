@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,9 @@ public class TimeMetric implements Metric {
                 lineFactory.apply("duration", zeroIfNull(groupTime.getDuration())),
                 lineFactory.apply("min_duration", zeroIfNull(groupTime.getMinDuration())),
                 lineFactory.apply("max_duration", zeroIfNull(groupTime.getMaxDuration())),
-                lineFactory.apply("sum_duration", zeroIfNull(groupTime.getSumDuration()))
+                lineFactory.apply("sum_duration", zeroIfNull(groupTime.getSumDuration())),
+                lineFactory.apply("start", zeroIfNull(groupTime.getStart())),
+                lineFactory.apply("stop", zeroIfNull(groupTime.getStop()))
         );
     }
 

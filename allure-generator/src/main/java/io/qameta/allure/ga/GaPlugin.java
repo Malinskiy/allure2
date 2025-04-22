@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package io.qameta.allure.ga;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.qameta.allure.Aggregator2;
-import io.qameta.allure.ReportInfo;
 import io.qameta.allure.ReportStorage;
-import io.qameta.allure.context.ReportInfoContext;
 import io.qameta.allure.core.Configuration;
 import io.qameta.allure.core.LaunchResults;
 import io.qameta.allure.entity.ExecutorInfo;
 import io.qameta.allure.entity.Label;
 import io.qameta.allure.entity.LabelName;
+import io.qameta.allure.executor.ExecutorPlugin;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -52,7 +51,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static io.qameta.allure.Constants.NO_ANALYTICS;
-import static io.qameta.allure.executor.ExecutorPlugin.EXECUTORS_BLOCK_NAME;
 
 /**
  * @author charlie (Dmitry Baev).
@@ -80,13 +78,11 @@ public class GaPlugin implements Aggregator2 {
             LOGGER.debug("analytics is disabled");
             return;
         }
-        final ReportInfoContext reportInfoContext = configuration.requireContext(ReportInfoContext.class);
-        final ReportInfo reportInfo = reportInfoContext.getValue();
 
         LOGGER.debug("send analytics");
         final GaParameters parameters = new GaParameters()
-                .setReportUuid(reportInfo.getReportUuid())
-                .setAllureVersion(reportInfo.getAllureVersion())
+                .setReportUuid(configuration.getUuid())
+                .setAllureVersion(configuration.getVersion())
                 .setExecutorType(getExecutorType(launchesResults))
                 .setResultsCount(getTestResultsCount(launchesResults))
                 .setResultsFormat(getLabelValuesAsString(launchesResults, LabelName.RESULT_FORMAT))
@@ -133,17 +129,14 @@ public class GaPlugin implements Aggregator2 {
     }
 
     private static String getClientId(final List<LaunchResults> launchesResults) {
-        final Optional<String> executorHostName = launchesResults.stream()
-                .map(results -> results.<ExecutorInfo>getExtra(EXECUTORS_BLOCK_NAME))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .findFirst()
+        return ExecutorPlugin.getLatestExecutor(launchesResults)
                 .map(ExecutorInfo::getBuildUrl)
-                .flatMap(GaPlugin::getHostSafe);
-
-        return executorHostName.map(DigestUtils::sha256Hex)
-                .orElse(getLocalHostName().map(DigestUtils::sha256Hex)
-                        .orElse(UUID.randomUUID().toString()));
+                .flatMap(GaPlugin::getHostSafe)
+                .map(DigestUtils::sha256Hex)
+                .orElseGet(() -> getLocalHostName()
+                        .map(DigestUtils::sha256Hex)
+                        .orElse(UUID.randomUUID().toString())
+                );
     }
 
     private static Optional<String> getHostSafe(final String url) {
@@ -156,15 +149,12 @@ public class GaPlugin implements Aggregator2 {
         return Optional.empty();
     }
 
-    private static String getExecutorType(final List<LaunchResults> launchesResults) {
-        return launchesResults.stream()
-                .map(results -> results.<ExecutorInfo>getExtra(EXECUTORS_BLOCK_NAME))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+    /* package-private */
+    static String getExecutorType(final List<LaunchResults> launchesResults) {
+        return ExecutorPlugin.getLatestExecutor(launchesResults)
                 .map(ExecutorInfo::getType)
                 .map(String::trim)
                 .map(String::toLowerCase)
-                .findFirst()
                 .orElse(LOCAL);
     }
 

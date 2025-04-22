@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,30 @@ class TestResultTreeTest {
     }
 
     @Test
+    void shouldNotDuplicateLeavesOnSameValues() {
+        final Tree<TestResult> behaviors = new TestResultTree(
+                "behaviors",
+                testResult -> groupByLabels(testResult, FEATURE)
+        );
+
+        final TestResult first = new TestResult()
+                .setName("first")
+                .setLabels(asList(feature("f1"), feature("f1"), feature("f1")));
+
+        behaviors.add(first);
+
+        assertThat(behaviors.getChildren())
+                .extracting(TreeNode::getName)
+                .containsExactlyInAnyOrder("f1");
+
+        assertThat(behaviors.getChildren())
+                .filteredOn("name", "f1")
+                .flatExtracting("children")
+                .extracting("name")
+                .containsExactlyInAnyOrder("first");
+    }
+
+    @Test
     void shouldCrossGroup() {
         final Tree<TestResult> behaviors = new TestResultTree(
                 "behaviors",
@@ -60,7 +84,6 @@ class TestResultTreeTest {
         behaviors.add(second);
 
         assertThat(behaviors.getChildren())
-                .hasSize(3)
                 .extracting(TreeNode::getName)
                 .containsExactlyInAnyOrder("f1", "f2", "f3");
 

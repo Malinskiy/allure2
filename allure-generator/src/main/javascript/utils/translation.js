@@ -3,19 +3,25 @@ import gtag from "./gtag";
 import settings from "./settings";
 
 export const LANGUAGES = [
-  { id: "en", title: "English" },
-  { id: "ru", title: "Русский" },
-  { id: "zh", title: "中文" },
-  { id: "de", title: "Deutsch" },
-  { id: "nl", title: "Nederlands" },
-  { id: "he", title: "Hebrew" },
-  { id: "br", title: "Brazil" },
-  { id: "pl", title: "Polski" },
-  { id: "ja", title: "日本語" },
-  { id: "es", title: "Español" },
-  { id: "kr", title: "한국어" },
-  { id: "fr", title: "Français" },
+  { id: "am", title: "Հայերեն" },
   { id: "az", title: "Azərbaycanca" },
+  { id: "br", title: "Brazil" },
+  { id: "de", title: "Deutsch" },
+  { id: "en", title: "English" },
+  { id: "es", title: "Español" },
+  { id: "fr", title: "Français" },
+  { id: "he", title: "Hebrew" },
+  { id: "isv", abbr: "Ⱄ", title: "Medžuslovjansky" },
+  { id: "it", title: "Italiano" },
+  { id: "ja", title: "日本語" },
+  { id: "ka", title: "ქართული" },
+  { id: "kr", title: "한국어" },
+  { id: "nl", title: "Nederlands" },
+  { id: "pl", title: "Polski" },
+  { id: "ru", title: "Русский" },
+  { id: "sv", title: "Svenska" },
+  { id: "tr", title: "Türkçe" },
+  { id: "zh", title: "中文" },
 ];
 
 LANGUAGES.map((lang) => lang.id).forEach((lang) =>
@@ -24,7 +30,7 @@ LANGUAGES.map((lang) => lang.id).forEach((lang) =>
 
 export function initTranslations() {
   return new Promise((resolve, reject) => {
-    const language = settings.get("language");
+    const language = settings.getLanguage();
     i18next.init(
       {
         lng: language,
@@ -35,6 +41,12 @@ export function initTranslations() {
       },
       (err) => (err ? reject(err) : resolve()),
     );
+
+    i18next.on("initialized", () => {
+      const pluralResolver = i18next.services.pluralResolver;
+      pluralResolver.addRule("isv", pluralResolver.getRule("be"));
+    });
+
     gtag("init_language", { language: language || "en" });
   });
 }

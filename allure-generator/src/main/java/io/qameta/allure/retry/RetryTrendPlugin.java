@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.CommonJsonAggregator2;
 import io.qameta.allure.Constants;
 import io.qameta.allure.core.LaunchResults;
+import io.qameta.allure.executor.ExecutorPlugin;
 import io.qameta.allure.trend.AbstractTrendPlugin;
 
 import java.util.ArrayList;
@@ -74,7 +75,7 @@ public class RetryTrendPlugin extends AbstractTrendPlugin<RetryTrendItem> {
 
     private static RetryTrendItem createCurrent(final List<LaunchResults> launchesResults) {
         final RetryTrendItem item = new RetryTrendItem();
-        extractLatestExecutor(launchesResults).ifPresent(info -> {
+        ExecutorPlugin.getLatestExecutor(launchesResults).ifPresent(info -> {
             item.setBuildOrder(info.getBuildOrder());
             item.setReportName(info.getReportName());
             item.setReportUrl(info.getReportUrl());

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,16 +29,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MarkdownAggregatorTest {
 
-    private final Configuration configuration = new ConfigurationBuilder().useDefault().build();
-
     @Test
     void shouldNotFailIfEmptyResults() {
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
+
         final MarkdownDescriptionsPlugin aggregator = new MarkdownDescriptionsPlugin();
         aggregator.aggregate(configuration, Collections.emptyList(), new InMemoryReportStorage());
     }
 
     @Test
     void shouldSkipResultsWithEmptyDescription() {
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
+
         final MarkdownDescriptionsPlugin aggregator = new MarkdownDescriptionsPlugin();
 
         final TestResult result = new TestResult().setName("some");
@@ -55,6 +57,8 @@ class MarkdownAggregatorTest {
 
     @Test
     void shouldSkipResultsWithNonEmptyDescriptionHtml() {
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
+
         final MarkdownDescriptionsPlugin aggregator = new MarkdownDescriptionsPlugin();
 
         final TestResult result = new TestResult()
@@ -74,6 +78,8 @@ class MarkdownAggregatorTest {
 
     @Test
     void shouldProcessDescription() {
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
+
         final MarkdownDescriptionsPlugin aggregator = new MarkdownDescriptionsPlugin();
 
         final TestResult result = new TestResult()

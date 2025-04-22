@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,10 +25,8 @@ import io.qameta.allure.entity.TestResult;
 import io.qameta.allure.entity.Time;
 import io.qameta.allure.tree.Tree;
 import io.qameta.allure.tree.TreeNode;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,13 +49,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CategoriesPluginTest {
 
     private static final String CATEGORY_NAME = "Category";
-
-    private Configuration configuration;
-
-    @BeforeEach
-    void setUp() {
-        configuration = new ConfigurationBuilder().useDefault().build();
-    }
 
     @Test
     void shouldDefaultCategoriesToResults() {
@@ -164,7 +155,8 @@ class CategoriesPluginTest {
     }
 
     @Test
-    void shouldWork() throws IOException {
+    void shouldWork() {
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
 
         Category category = new Category()
                 .setName(CATEGORY_NAME)
@@ -199,7 +191,9 @@ class CategoriesPluginTest {
     }
 
     @Test
-    void flakyTestsCanBeAddedToCategory() throws IOException {
+    void flakyTestsCanBeAddedToCategory() {
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
+
         Category category = new Category()
                 .setName(CATEGORY_NAME)
                 .setMatchedStatuses(singletonList(Status.FAILED))
@@ -218,6 +212,38 @@ class CategoriesPluginTest {
         plugin.aggregate(configuration, launchResultsList, storage);
 
         Set<TestResult> results = launchResultsList.get(0).getAllResults();
+        List<Category> categories = results.toArray(new TestResult[]{})[0]
+                .getExtraBlock("categories");
+
+        assertThat(categories).as("test categories")
+                .extracting(Category::getName)
+                .containsExactly(category.getName());
+
+        assertThat(storage.getReportDataFiles())
+                .containsKey("data/" + JSON_FILE_NAME);
+    }
+
+    @Test
+    void flakyTestsShouldBeMatchedByDefault() {
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
+
+        final Category category = new Category()
+                .setName(CATEGORY_NAME)
+                .setMatchedStatuses(singletonList(Status.FAILED));
+
+        final Map<String, Object> meta = new HashMap<>();
+        meta.put("categories", singletonList(category));
+
+        final List<LaunchResults> launchResultsList = createSingleLaunchResults(
+                meta, createTestResult("asd\n", Status.FAILED, true)
+        );
+
+        final CategoriesPlugin plugin = new CategoriesPlugin();
+
+        final InMemoryReportStorage storage = new InMemoryReportStorage();
+        plugin.aggregate(configuration, launchResultsList, storage);
+
+        final Set<TestResult> results = launchResultsList.get(0).getAllResults();
         List<Category> categories = results.toArray(new TestResult[]{})[0]
                 .getExtraBlock("categories");
 

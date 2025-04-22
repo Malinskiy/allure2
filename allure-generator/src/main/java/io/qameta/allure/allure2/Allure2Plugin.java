@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -75,9 +75,10 @@ import static java.util.Objects.nonNull;
  * @since 2.0
  */
 @SuppressWarnings({
-        "PMD.ExcessiveImports",
         "ClassDataAbstractionCoupling",
-        "ClassFanOutComplexity"
+        "ClassFanOutComplexity",
+        "PMD.ExcessiveImports",
+        "PMD.TooManyMethods",
 })
 public class Allure2Plugin implements Reader {
 
@@ -90,6 +91,10 @@ public class Allure2Plugin implements Reader {
             StageResult::getTime,
             nullsLast(comparing(Time::getStart, nullsLast(naturalOrder())))
     );
+
+    private static final Comparator<Parameter> PARAMETER_COMPARATOR =
+            comparing(Parameter::getName, nullsFirst(naturalOrder()))
+                    .thenComparing(Parameter::getValue, nullsFirst(naturalOrder()));
 
     private final ObjectMapper mapper = JsonMapper.builder()
             .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME)
@@ -315,11 +320,16 @@ public class Allure2Plugin implements Reader {
     }
 
     private List<Parameter> getParameters(final TestResult result) {
-        final TreeSet<Parameter> parametersSet = new TreeSet<>(
-                comparing(Parameter::getName, nullsFirst(naturalOrder()))
-                        .thenComparing(Parameter::getValue, nullsFirst(naturalOrder()))
+        final List<Parameter> parameters = convertList(
+                result.getParameters(),
+                p -> !HIDDEN.equals(p.getMode()),
+                this::convert
         );
-        parametersSet.addAll(convertList(result.getParameters(), p -> !HIDDEN.equals(p.getMode()), this::convert));
+        if (Objects.isNull(parameters)) {
+            return new ArrayList<>();
+        }
+        final Set<Parameter> parametersSet = new TreeSet<>(PARAMETER_COMPARATOR);
+        parametersSet.addAll(parameters);
         return new ArrayList<>(parametersSet);
     }
 

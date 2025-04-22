@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class ReportGeneratorTest {
 
     @BeforeAll
     static void setUp(@TempDir final Path temp) throws Exception {
-        final Configuration configuration = new ConfigurationBuilder().useDefault().build();
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
         final ReportGenerator generator = new ReportGenerator(configuration);
         output = temp.resolve("report");
         final Path resultsDirectory = Files.createDirectories(temp.resolve("results"));

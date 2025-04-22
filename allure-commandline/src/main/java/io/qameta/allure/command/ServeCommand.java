@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
 import io.qameta.allure.option.ConfigOptions;
 import io.qameta.allure.option.HostPortOptions;
+import io.qameta.allure.option.ReportLanguageOptions;
+import io.qameta.allure.option.ReportNameOptions;
 import io.qameta.allure.option.ResultsOptions;
 
 /**
@@ -39,6 +41,12 @@ public class ServeCommand {
     @ParametersDelegate
     private ConfigOptions configOptions = new ConfigOptions();
 
+    @ParametersDelegate
+    private ReportNameOptions reportNameOptions = new ReportNameOptions();
+
+    @ParametersDelegate
+    private ReportLanguageOptions reportLanguageOptions = new ReportLanguageOptions();
+
     public ResultsOptions getResultsOptions() {
         return resultsOptions;
     }
@@ -49,5 +57,13 @@ public class ServeCommand {
 
     public ConfigOptions getConfigOptions() {
         return configOptions;
+    }
+
+    public ReportNameOptions getReportNameOptions() {
+        return reportNameOptions;
+    }
+
+    public ReportLanguageOptions getReportLanguageOptions() {
+        return reportLanguageOptions;
     }
 }

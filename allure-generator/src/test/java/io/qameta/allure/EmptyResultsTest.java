@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class EmptyResultsTest {
     void shouldAllowEmptyResultsDirectory(@TempDir final Path temp) throws Exception {
         final Path resultsDirectory = Files.createDirectories(temp.resolve("results"));
         final Path outputDirectory = Files.createDirectories(temp.resolve("report"));
-        final Configuration configuration = new ConfigurationBuilder().useDefault().build();
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
         final ReportGenerator generator = new ReportGenerator(configuration);
 
         generator.generate(outputDirectory, resultsDirectory);
@@ -41,7 +41,7 @@ class EmptyResultsTest {
     void shouldAllowNonExistsResultsDirectory(@TempDir final Path temp) throws Exception {
         final Path resultsDirectory = temp.resolve("results");
         final Path outputDirectory = Files.createDirectories(temp.resolve("report"));
-        final Configuration configuration = new ConfigurationBuilder().useDefault().build();
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
         final ReportGenerator generator = new ReportGenerator(configuration);
 
         generator.generate(outputDirectory, resultsDirectory);
@@ -51,7 +51,7 @@ class EmptyResultsTest {
     void shouldAllowRegularFileAsResultsDirectory(@TempDir final Path temp) throws Exception {
         final Path resultsDirectory = Files.createTempFile(temp, "a", ".txt");
         final Path outputDirectory = Files.createDirectories(temp.resolve("report"));
-        final Configuration configuration = new ConfigurationBuilder().useDefault().build();
+        final Configuration configuration = ConfigurationBuilder.bundled().build();
         final ReportGenerator generator = new ReportGenerator(configuration);
 
         generator.generate(outputDirectory, resultsDirectory);

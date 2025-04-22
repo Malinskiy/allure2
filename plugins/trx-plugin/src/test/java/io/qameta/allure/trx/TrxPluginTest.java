@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -74,11 +74,10 @@ class TrxPluginTest {
                 "sample.trx"
         );
 
-        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.forClass(TestResult.class);
-        verify(visitor, times(4)).visitTestResult(captor.capture());
+        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.captor();
+        verify(visitor, times(5)).visitTestResult(captor.capture());
 
         assertThat(captor.getAllValues())
-                .hasSize(4)
                 .extracting(TestResult::getName, TestResult::getStatus, TestResult::getDescription)
                 .containsExactlyInAnyOrder(
                         tuple("AddingSeveralNumbers_40", Status.PASSED, "Adding several numbers"),
@@ -103,7 +102,7 @@ class TrxPluginTest {
                 "sample.trx"
         );
 
-        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.forClass(TestResult.class);
+        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.captor();
         verify(visitor, times(1)).visitTestResult(captor.capture());
 
         assertThat(captor.getAllValues())
@@ -119,7 +118,7 @@ class TrxPluginTest {
                 "sample.trx"
         );
 
-        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.forClass(TestResult.class);
+        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.captor();
         verify(visitor, times(1)).visitTestResult(captor.capture());
 
         assertThat(captor.getAllValues())
@@ -135,8 +134,8 @@ class TrxPluginTest {
                 "sample.trx"
         );
 
-        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.forClass(TestResult.class);
-        verify(visitor, times(4)).visitTestResult(captor.capture());
+        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.captor();
+        verify(visitor, times(5)).visitTestResult(captor.capture());
 
         assertThat(captor.getAllValues())
                 .filteredOn(result -> result.getStatus() == Status.FAILED)
@@ -153,7 +152,7 @@ class TrxPluginTest {
                 "sample.trx"
         );
 
-        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.forClass(TestResult.class);
+        final ArgumentCaptor<TestResult> captor = ArgumentCaptor.captor();
         verify(visitor, times(7)).visitTestResult(captor.capture());
 
         assertThat(captor.getAllValues())

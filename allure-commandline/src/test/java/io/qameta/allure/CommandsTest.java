@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package io.qameta.allure;
 
 import io.qameta.allure.option.ConfigOptions;
+import io.qameta.allure.option.ReportLanguageOptions;
+import io.qameta.allure.option.ReportNameOptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -52,8 +54,10 @@ class CommandsTest {
         final Path reportPath = Files.createDirectories(temp.resolve("report"));
         Files.createTempFile(reportPath, "some", ".txt");
         final Commands commands = new Commands(home);
-        final ExitCode exitCode = commands.generate(reportPath, null, false,
-                null);
+        final ExitCode exitCode = commands.generate(
+                reportPath, Collections.emptyList(), false, false,
+                new ConfigOptions(), new ReportNameOptions(), new ReportLanguageOptions()
+        );
 
         assertThat(exitCode)
                 .isEqualTo(ExitCode.GENERIC_ERROR);
@@ -99,7 +103,11 @@ class CommandsTest {
         when(options.getProfile()).thenReturn("test");
         final Path reportPath = Files.createDirectories(temp.resolve("report"));
         final Commands commands = new Commands(home);
-        final ExitCode exitCode = commands.generate(reportPath, Collections.emptyList(), false, options);
+        final ExitCode exitCode = commands.generate(
+                reportPath,
+                Collections.emptyList(), false, false, options,
+                new ReportNameOptions(), new ReportLanguageOptions()
+        );
 
         assertThat(exitCode)
                 .isEqualTo(ExitCode.NO_ERROR);

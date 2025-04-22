@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import io.qameta.allure.context.FreemarkerContext;
 import io.qameta.allure.context.JacksonContext;
 import io.qameta.allure.context.MarkdownContext;
 import io.qameta.allure.context.RandomUidContext;
-import io.qameta.allure.context.ReportInfoContext;
 import io.qameta.allure.core.AttachmentsPlugin;
 import io.qameta.allure.core.Configuration;
 import io.qameta.allure.core.MarkdownDescriptionsPlugin;
@@ -78,15 +77,14 @@ public final class DummyReportGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DummyReportGenerator.class);
     private static final int MIN_ARGUMENTS_COUNT = 2;
     private static final List<Extension> EXTENSIONS = Arrays.asList(
-            new ReportInfoContext("dev"),
             new JacksonContext(),
             new MarkdownContext(),
             new FreemarkerContext(),
             new RandomUidContext(),
             new MarkdownDescriptionsPlugin(),
+            new TagsPlugin(),
             new RetryPlugin(),
             new RetryTrendPlugin(),
-            new TagsPlugin(),
             new SeverityPlugin(),
             new OwnerPlugin(),
             new IdeaLinksPlugin(),
@@ -133,11 +131,11 @@ public final class DummyReportGenerator {
         LOGGER.info("Found {} plugins", plugins.size());
         plugins.forEach(plugin -> LOGGER.info(plugin.getConfig().getName()));
         final Configuration configuration = new ConfigurationBuilder()
-                .fromExtensions(EXTENSIONS)
-                .fromPlugins(plugins)
+                .withExtensions(EXTENSIONS)
+                .withPlugins(plugins)
                 .build();
         final ReportGenerator generator = new ReportGenerator(configuration);
-        generator.generateSingleFile(files[lastIndex], Arrays.asList(Arrays.copyOf(files, lastIndex)));
+        generator.generate(files[lastIndex], Arrays.asList(Arrays.copyOf(files, lastIndex)));
     }
 
     public static Path[] getFiles(final String... paths) {

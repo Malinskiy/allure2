@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package io.qameta.allure.core;
 
 import freemarker.template.Template;
+import io.qameta.allure.Constants;
 import io.qameta.allure.PluginConfiguration;
 import io.qameta.allure.ReportGenerationException;
 import io.qameta.allure.ReportStorage;
@@ -30,17 +31,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.Optional;
 
 /**
  * @author charlie (Dmitry Baev).
  */
+@SuppressWarnings("PMD.CognitiveComplexity")
 public class ReportWebGenerator {
 
     private static final String FAVICON_ICO = "favicon.ico";
@@ -57,7 +59,7 @@ public class ReportWebGenerator {
 
         final boolean inline = reportStorage instanceof InMemoryReportStorage;
 
-        final Set<String> jsFiles = new HashSet<>();
+        final List<String> jsFiles = new ArrayList<>();
         if (inline) {
             jsFiles.add(dataBase64(TEXT_JAVASCRIPT, APP_JS));
         } else {
@@ -65,7 +67,7 @@ public class ReportWebGenerator {
             write(outputDirectory, APP_JS, readResource(APP_JS));
         }
 
-        final Set<String> cssFiles = new HashSet<>();
+        final List<String> cssFiles = new ArrayList<>();
         if (inline) {
             cssFiles.add(dataBase64(TEXT_CSS, STYLES_CSS));
         } else {
@@ -141,9 +143,15 @@ public class ReportWebGenerator {
                 dataModel.put("reportDataFiles", reportDataFiles);
             }
 
-            dataModel.put("analyticsDisable", false);
-            dataModel.put("reportUuid", UUID.randomUUID().toString());
-            dataModel.put("allureVersion", "dev");
+            final boolean analyticsDisable = Optional.ofNullable(System.getenv(Constants.NO_ANALYTICS))
+                    .map(Boolean::parseBoolean)
+                    .orElse(false);
+            dataModel.put("analyticsDisable", analyticsDisable);
+
+            dataModel.put("reportUuid", configuration.getUuid());
+            dataModel.put("reportName", configuration.getReportName());
+            dataModel.put("reportLanguage", configuration.getReportLanguage());
+            dataModel.put("allureVersion", configuration.getVersion());
 
             template.process(dataModel, writer);
         } catch (Exception e) {

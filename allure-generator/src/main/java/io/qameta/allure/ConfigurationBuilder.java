@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Builder for {@link Configuration}.
@@ -79,24 +80,89 @@ public class ConfigurationBuilder {
 
     private static final String ALLURE_VERSION_TXT_PATH = "/allure-version.txt";
 
+    private static final String UNDEFINED = "Undefined";
+
+    private static final List<Extension> BUNDLED_EXTENSIONS = Arrays.asList(
+            new MarkdownDescriptionsPlugin(),
+            new TagsPlugin(),
+            new RetryPlugin(),
+            new RetryTrendPlugin(),
+            new SeverityPlugin(),
+            new OwnerPlugin(),
+            new IdeaLinksPlugin(),
+            new HistoryPlugin(),
+            new HistoryTrendPlugin(),
+            new CategoriesPlugin(),
+            new CategoriesTrendPlugin(),
+            new DurationPlugin(),
+            new DurationTrendPlugin(),
+            new StatusChartPlugin(),
+            new TimelinePlugin(),
+            new SuitesPlugin(),
+            new TestsResultsPlugin(),
+            new AttachmentsPlugin(),
+            new MailPlugin(),
+            new InfluxDbExportPlugin(),
+            new PrometheusExportPlugin(),
+            new SummaryPlugin(),
+            new ExecutorPlugin(),
+            new LaunchPlugin(),
+            new Allure1Plugin(),
+            new Allure1EnvironmentPlugin(),
+            new Allure2Plugin(),
+            new GaPlugin()
+    );
+
     private final List<Extension> extensions = new ArrayList<>();
 
     private final List<Plugin> plugins = new ArrayList<>();
 
-    public ConfigurationBuilder useDefault() {
-        final String allureVersion = getVersionFromFile()
-                .orElse(getVersionFromManifest().orElse("Undefined"));
+    private final String uuid;
 
-        fromExtensions(Arrays.asList(
-                new ReportInfoContext(allureVersion),
+    private final String version;
+
+    private String reportName;
+
+    private String reportLanguage;
+
+    /**
+     * Instantiates a new Configuration builder.
+     *
+     * @deprecated use static factory methods {@link #empty()} or {@link #bundled()} instead.
+     */
+    @Deprecated
+    public ConfigurationBuilder() {
+        this(getVersion());
+    }
+
+    /**
+     * Instantiates a new Configuration builder.
+     *
+     * @param version the report version
+     */
+    private ConfigurationBuilder(final String version) {
+        this.version = version;
+        this.uuid = UUID.randomUUID().toString();
+    }
+
+    /**
+     * Use default configuration builder.
+     *
+     * @return the configuration builder
+     * @deprecated use {@link #bundled()} static factory method instead.
+     */
+    @Deprecated
+    public ConfigurationBuilder useDefault() {
+        return withExtensions(Arrays.asList(
+                new ReportInfoContext(version, uuid),
                 new JacksonContext(),
                 new MarkdownContext(),
                 new FreemarkerContext(),
                 new RandomUidContext(),
                 new MarkdownDescriptionsPlugin(),
+                new TagsPlugin(),
                 new RetryPlugin(),
                 new RetryTrendPlugin(),
-                new TagsPlugin(),
                 new SeverityPlugin(),
                 new OwnerPlugin(),
                 new IdeaLinksPlugin(),
@@ -122,27 +188,125 @@ public class ConfigurationBuilder {
                 new Allure2Plugin(),
                 new GaPlugin()
         ));
-        return this;
     }
 
+    /**
+     * Bundled configuration builder.
+     *
+     * @return the configuration builder
+     */
+    public static ConfigurationBuilder bundled() {
+        return empty()
+                .withExtensions(BUNDLED_EXTENSIONS);
+    }
+
+    /**
+     * Empty configuration builder.
+     *
+     * @return the configuration builder
+     */
+    public static ConfigurationBuilder empty() {
+        final String allureVersion = getVersion();
+        return new ConfigurationBuilder(allureVersion)
+                .withExtensions(Arrays.asList(
+                        new ReportInfoContext(allureVersion),
+                        new JacksonContext(),
+                        new MarkdownContext(),
+                        new FreemarkerContext(),
+                        new RandomUidContext()
+                ));
+    }
+
+    /**
+     * From extensions configuration builder.
+     *
+     * @param extensions the extensions
+     * @return the configuration builder
+     * @deprecated use {@link #withExtensions(List)} instead.
+     */
+    @Deprecated
     public ConfigurationBuilder fromExtensions(final List<Extension> extensions) {
+        return withExtensions(extensions);
+    }
+
+    /**
+     * From extensions configuration builder.
+     *
+     * @param extensions the extensions
+     * @return the configuration builder
+     */
+    public ConfigurationBuilder withExtensions(final List<Extension> extensions) {
         this.extensions.addAll(extensions);
         return this;
     }
 
+    /**
+     * From plugins configuration builder.
+     *
+     * @param plugins the plugins
+     * @return the configuration builder
+     * @deprecated use {@link #withPlugins(List)} instead.
+     */
+    @Deprecated
     public ConfigurationBuilder fromPlugins(final List<Plugin> plugins) {
+        return withPlugins(plugins);
+    }
+
+    /**
+     * Withm plugins configuration builder.
+     *
+     * @param plugins the plugins
+     * @return the configuration builder
+     */
+    public ConfigurationBuilder withPlugins(final List<Plugin> plugins) {
         this.plugins.addAll(plugins);
         plugins.stream()
                 .map(Plugin::getExtensions)
-                .forEach(this::fromExtensions);
+                .forEach(this::withExtensions);
         return this;
     }
 
+    /**
+     * With report name configuration builder.
+     *
+     * @param reportName the report name
+     * @return the configuration builder
+     */
+    public ConfigurationBuilder withReportName(final String reportName) {
+        this.reportName = reportName;
+        return this;
+    }
+
+    /**
+     * With report language configuration builder.
+     *
+     * @param reportLanguage the report language
+     * @return the configuration builder
+     */
+    public ConfigurationBuilder withReportLanguage(final String reportLanguage) {
+        this.reportLanguage = reportLanguage;
+        return this;
+    }
+
+    /**
+     * Build configuration.
+     *
+     * @return the configuration
+     */
     public Configuration build() {
         return new DefaultConfiguration(
+                this.uuid,
+                this.version,
+                this.reportName,
+                this.reportLanguage,
                 Collections.unmodifiableList(extensions),
                 Collections.unmodifiableList(plugins)
         );
+    }
+
+    private static String getVersion() {
+        return getVersionFromFile()
+                .orElse(getVersionFromManifest().orElse(UNDEFINED));
     }
 
     private static Optional<String> getVersionFromFile() {
@@ -162,4 +326,6 @@ public class ConfigurationBuilder {
                 .map(Class::getPackage)
                 .map(Package::getImplementationVersion);
     }
+
+
 }

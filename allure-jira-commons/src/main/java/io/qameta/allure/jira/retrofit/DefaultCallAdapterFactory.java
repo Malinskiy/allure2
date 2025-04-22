@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package io.qameta.allure.jira.retrofit;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.CallAdapter;
@@ -88,7 +87,6 @@ public final class DefaultCallAdapterFactory<T> extends CallAdapter.Factory {
     /**
      * Call adapter factory for instances.
      */
-    @SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
     private class InstanceCallAdapter implements CallAdapter<T, Object> {
 
         private static final int NOT_FOUND = 404;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,20 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.qameta.allure.cucumberjson;
+package io.qameta.allure.option;
 
-import com.google.inject.multibindings.Multibinder;
-import io.qameta.allure.AbstractPlugin;
-import io.qameta.allure.ResultsProcessor;
+import com.beust.jcommander.Parameter;
 
 /**
- * @author Egor Borisov ehborisov@gmail.com
+ * Contains profile options.
+ *
+ * @since 2.0
  */
-public class CucumberJsonPlugin extends AbstractPlugin {
+@SuppressWarnings("PMD.ImmutableField")
+public class ReportNameOptions {
 
-    @Override
-    protected void configure() {
-        Multibinder.newSetBinder(binder(), ResultsProcessor.class)
-                .addBinding().to(CucumberJsonResultsReader.class);
+    @Parameter(
+            names = {"--name", "--report-name"},
+            description = "The report name."
+    )
+    private String reportName;
+
+    public String getReportName() {
+        return reportName;
     }
+
 }

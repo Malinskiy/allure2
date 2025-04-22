@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ class XrayTestRunExportPluginTest {
         when(launchResults.getAllResults()).thenReturn(results);
 
         final ExecutorInfo executorInfo = new ExecutorInfo()
-                .setBuildName(RandomStringUtils.random(10))
-                .setReportUrl(RandomStringUtils.random(10));
+                .setBuildName(RandomStringUtils.insecure().next(10))
+                .setReportUrl(RandomStringUtils.insecure().next(10));
         when(launchResults.getExtra("executor")).thenReturn(Optional.of(executorInfo));
 
         final JiraService service = mock(JiraService.class);
@@ -124,8 +124,8 @@ class XrayTestRunExportPluginTest {
         when(launchResults.getAllResults()).thenReturn(results);
 
         final ExecutorInfo executorInfo = new ExecutorInfo()
-                .setBuildName(RandomStringUtils.random(10))
-                .setReportUrl(RandomStringUtils.random(10));
+                .setBuildName(RandomStringUtils.insecure().next(10))
+                .setReportUrl(RandomStringUtils.insecure().next(10));
         when(launchResults.getExtra("executor")).thenReturn(Optional.of(executorInfo));
 
         final JiraService service = mock(JiraService.class);
@@ -173,8 +173,8 @@ class XrayTestRunExportPluginTest {
         when(launchResults.getAllResults()).thenReturn(results);
 
         final ExecutorInfo executorInfo = new ExecutorInfo()
-                .setBuildName(RandomStringUtils.random(10))
-                .setReportUrl(RandomStringUtils.random(10));
+                .setBuildName(RandomStringUtils.insecure().next(10))
+                .setReportUrl(RandomStringUtils.insecure().next(10));
         when(launchResults.getExtra("executor")).thenReturn(Optional.of(executorInfo));
 
         final JiraService service = mock(JiraService.class);
@@ -212,8 +212,8 @@ class XrayTestRunExportPluginTest {
 
     static TestResult createTestResult(final Status status) {
         return new TestResult()
-                .setUid(RandomStringUtils.random(10))
-                .setName(RandomStringUtils.random(10))
+                .setUid(RandomStringUtils.insecure().next(10))
+                .setName(RandomStringUtils.insecure().next(10))
                 .setStatus(status);
     }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2023 Qameta Software OÜ
+ *  Copyright 2016-2024 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public final class TestData {
     }
 
     public static String randomString() {
-        return RandomStringUtils.randomAlphabetic(10);
+        return RandomStringUtils.insecure().nextAlphabetic(10);
     }
 
     public static int randomPort() {
