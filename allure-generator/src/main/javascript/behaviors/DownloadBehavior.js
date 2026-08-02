@@ -27,7 +27,8 @@ export default class DownloadBehavior extends Behavior {
       .then((href) => {
         const link = document.createElement("a");
         link.setAttribute("href", href);
-        link.setAttribute("download", path);
+        const downloadName = path.endsWith(".gz") ? path.slice(0, -3) : path;
+        link.setAttribute("download", downloadName);
         if (target) {
           link.setAttribute("target", "_blank");
         }
