@@ -67,9 +67,14 @@ public class FileSystemReportStorage implements ReportStorage {
     public void addDataFile(final String name, final Path file) {
         final Path target = getPath(name);
         try {
-            Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            Files.deleteIfExists(target);
+            Files.createLink(target, file);
+        } catch (UnsupportedOperationException | IOException e) {
+            try {
+                Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException copyEx) {
+                throw new UncheckedIOException(copyEx);
+            }
         }
     }
 
