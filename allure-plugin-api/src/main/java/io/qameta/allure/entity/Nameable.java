@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package io.qameta.allure.entity;
  * @author Dmitry Baev baev@qameta.io
  *         Date: 31.01.16
  */
+@FunctionalInterface
 public interface Nameable {
 
     String getName();

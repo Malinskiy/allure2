@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.qameta.allure.testdata.TestData.allure1data;
 import static io.qameta.allure.testdata.TestData.unpackFile;
@@ -37,123 +41,214 @@ class ReportGeneratorTest {
         final ReportGenerator generator = new ReportGenerator(configuration);
         output = temp.resolve("report");
         final Path resultsDirectory = Files.createDirectories(temp.resolve("results"));
-        allure1data().forEach(resource -> unpackFile(
-                "allure1data/" + resource,
-                resultsDirectory.resolve(resource)
-        ));
-        generator.generate(output, resultsDirectory);
+        Allure.step("Prepare Allure 1 fixture dataset", () -> {
+            allure1data().forEach(
+                    resource -> unpackFile(
+                            "allure1data/" + resource,
+                            resultsDirectory.resolve(resource)
+                    )
+            );
+        });
+        Allure.step("Generate report from Allure 1 fixture dataset", () -> {
+            generator.generate(output, resultsDirectory);
+            Allure.addAttachment(
+                    "Generated report files", "text/plain", String.join(
+                            System.lineSeparator(),
+                            listRelativeFiles(output)
+                    )
+            );
+        });
     }
 
+    /**
+     * Verifies generating index HTML for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateIndexHtml() {
         assertThat(output.resolve("index.html"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies writing report static for report generation.
+     */
+    @Description
     @Test
-    void shouldWriteReportStatic() {
-        assertThat(output.resolve("app.js"))
-                .isRegularFile();
-        assertThat(output.resolve("styles.css"))
-                .isRegularFile();
+    void shouldWriteReportStatic() throws Exception {
+        final Path assetsDirectory = output.resolve("assets");
+
+        assertThat(assetsDirectory)
+                .isDirectory();
+        assertThat(listRelativeFiles(assetsDirectory))
+                .anySatisfy(file -> assertThat(file).endsWith(".js"))
+                .anySatisfy(file -> assertThat(file).endsWith(".ico"));
     }
 
+    /**
+     * Verifies generating categories JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateCategoriesJson() {
         assertThat(output.resolve("data/categories.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating xUnit JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateXunitJson() {
         assertThat(output.resolve("data/suites.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating timeline JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateTimelineJson() {
         assertThat(output.resolve("data/timeline.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget categories JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetCategoriesJson() {
         assertThat(output.resolve("widgets/categories.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget categories trend JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetCategoriesTrendJson() {
         assertThat(output.resolve("widgets/categories-trend.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget duration JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetDurationJson() {
         assertThat(output.resolve("widgets/duration.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget duration trend JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetDurationTrendJson() {
         assertThat(output.resolve("widgets/duration-trend.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget retry trend JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetRetryTrendJson() {
         assertThat(output.resolve("widgets/retry-trend.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget environment JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetEnvironmentJson() {
         assertThat(output.resolve("widgets/environment.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget executors JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetExecutorsJson() {
         assertThat(output.resolve("widgets/executors.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget history trend JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetHistoryTrendJson() {
         assertThat(output.resolve("widgets/history-trend.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget launch JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetLaunchJson() {
         assertThat(output.resolve("widgets/launch.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget severity JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetSeverityJson() {
         assertThat(output.resolve("widgets/severity.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget status JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetStatusJson() {
         assertThat(output.resolve("widgets/status-chart.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget suites JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetSuitesJson() {
         assertThat(output.resolve("widgets/suites.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating widget summary JSON for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateWidgetSummaryJson() {
         assertThat(output.resolve("widgets/summary.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating attachments for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateAttachments() throws Exception {
         final Path attachmentsFolder = output.resolve("data/attachments");
@@ -163,6 +258,10 @@ class ReportGeneratorTest {
                 .hasSize(13);
     }
 
+    /**
+     * Verifies generating test cases for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateTestCases() throws Exception {
         final Path testCasesFolder = output.resolve("data/test-cases");
@@ -172,15 +271,33 @@ class ReportGeneratorTest {
                 .hasSize(20);
     }
 
+    /**
+     * Verifies generating history for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateHistory() {
         assertThat(output.resolve("history/history.json"))
                 .isRegularFile();
     }
 
+    /**
+     * Verifies generating mail for report generation.
+     */
+    @Description
     @Test
     void shouldGenerateMail() {
         assertThat(output.resolve("export/mail.html"))
                 .isRegularFile();
+    }
+
+    private static List<String> listRelativeFiles(final Path directory) throws IOException {
+        try (Stream<Path> files = Files.walk(directory)) {
+            return files
+                    .filter(Files::isRegularFile)
+                    .map(directory::relativize)
+                    .map(Path::toString)
+                    .collect(Collectors.toList());
+        }
     }
 }

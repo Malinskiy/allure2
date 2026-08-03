@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,17 +40,14 @@ public class PrometheusExportPlugin extends CommonMetricAggregator2 {
     public List<Metric> getMetrics() {
         final String labels = getPrometheusLabels();
 
-        final StatusMetric statusMetric = new StatusMetric((status, count) ->
-                new PrometheusMetricLine("launch_status", status.value(), String.valueOf(count), labels));
+        final StatusMetric statusMetric = new StatusMetric((status, count) -> new PrometheusMetricLine("launch_status", status.value(), String.valueOf(count), labels));
 
-        final TimeMetric timeMetric = new TimeMetric((key, time) ->
-                new PrometheusMetricLine("launch_time", key, String.valueOf(time), labels));
+        final TimeMetric timeMetric = new TimeMetric((key, time) -> new PrometheusMetricLine("launch_time", key, String.valueOf(time), labels));
 
-        final CategoriesMetric categoriesMetric = new CategoriesMetric((category, count) ->
-                new PrometheusMetricLine("launch_problems", category, String.valueOf(count), labels));
+        final CategoriesMetric categoriesMetric = new CategoriesMetric((category, count) -> new PrometheusMetricLine("launch_problems", category, String.valueOf(count), labels));
 
-        final RetryMetric retryMetric = new RetryMetric((key, count) ->
-                new PrometheusMetricLine("launch_retries", key, String.valueOf(count), labels)
+        final RetryMetric retryMetric = new RetryMetric(
+                (key, count) -> new PrometheusMetricLine("launch_retries", key, String.valueOf(count), labels)
         );
 
         return Arrays.asList(

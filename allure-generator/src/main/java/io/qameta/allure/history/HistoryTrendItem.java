@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,7 +37,11 @@ public class HistoryTrendItem implements Serializable {
     @JsonProperty("data")
     @XmlElement(required = true)
     protected Statistic data;
-    @XmlElement(required = true, type = Long.class, nillable = true)
+    @XmlElement(
+            required = true,
+            type = Long.class,
+            nillable = true
+    )
     protected Long buildOrder;
     @XmlElement(required = true)
     protected String reportUrl;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package io.qameta.allure.history;
 
+import io.qameta.allure.Allure;
+import io.qameta.allure.Description;
 import io.qameta.allure.ReportStorage;
 import io.qameta.allure.context.JacksonContext;
 import io.qameta.allure.core.Configuration;
@@ -57,6 +59,10 @@ import static org.mockito.Mockito.when;
  */
 class HistoryTrendPluginTest {
 
+    /**
+     * Verifies reading old data for history trend aggregation.
+     */
+    @Description
     @SuppressWarnings("unchecked")
     @Test
     void shouldReadOldData(@TempDir final Path resultsDirectory) throws Exception {
@@ -71,7 +77,13 @@ class HistoryTrendPluginTest {
         final ResultsVisitor visitor = mock(ResultsVisitor.class);
 
         final HistoryTrendPlugin plugin = new HistoryTrendPlugin();
-        plugin.readResults(configuration, visitor, resultsDirectory);
+        Allure.step(
+                "Read old history trend data from " + trend, () -> plugin.readResults(
+                        configuration,
+                        visitor,
+                        resultsDirectory
+                )
+        );
 
         final ArgumentCaptor<List<HistoryTrendItem>> captor = ArgumentCaptor.captor();
         verify(visitor, times(1))
@@ -84,6 +96,10 @@ class HistoryTrendPluginTest {
                 .containsExactly(20L, 12L, 12L, 1L);
     }
 
+    /**
+     * Verifies reading new data for history trend aggregation.
+     */
+    @Description
     @SuppressWarnings("unchecked")
     @Test
     void shouldReadNewData(@TempDir final Path resultsDirectory) throws Exception {
@@ -98,7 +114,13 @@ class HistoryTrendPluginTest {
         final ResultsVisitor visitor = mock(ResultsVisitor.class);
 
         final HistoryTrendPlugin plugin = new HistoryTrendPlugin();
-        plugin.readResults(configuration, visitor, resultsDirectory);
+        Allure.step(
+                "Read current history trend data from " + trend, () -> plugin.readResults(
+                        configuration,
+                        visitor,
+                        resultsDirectory
+                )
+        );
 
         final ArgumentCaptor<List<HistoryTrendItem>> captor = ArgumentCaptor.captor();
         verify(visitor, times(1))
@@ -112,8 +134,10 @@ class HistoryTrendPluginTest {
 
         assertThat(captor.getValue())
                 .hasSize(4)
-                .extracting(HistoryTrendItem::getBuildOrder,
-                        HistoryTrendItem::getReportName, HistoryTrendItem::getReportUrl)
+                .extracting(
+                        HistoryTrendItem::getBuildOrder,
+                        HistoryTrendItem::getReportName, HistoryTrendItem::getReportUrl
+                )
                 .containsExactly(
                         Tuple.tuple(7L, "some", "some/report#7"),
                         Tuple.tuple(6L, "some", "some/report#6"),
@@ -122,11 +146,16 @@ class HistoryTrendPluginTest {
                 );
     }
 
+    /**
+     * Verifies processing corrupted data for history trend aggregation.
+     */
+    @Description
     @SuppressWarnings("unchecked")
     @Test
     void shouldProcessCorruptedData(@TempDir final Path resultsDirectory) throws Exception {
         final Path history = Files.createDirectories(resultsDirectory.resolve("history"));
-        Files.createFile(history.resolve("history-trend.json"));
+        final Path trend = history.resolve("history-trend.json");
+        Allure.step("Create empty history trend file", () -> Files.createFile(trend));
 
         final Configuration configuration = mock(Configuration.class);
         when(configuration.requireContext(JacksonContext.class))
@@ -135,7 +164,13 @@ class HistoryTrendPluginTest {
         final ResultsVisitor visitor = mock(ResultsVisitor.class);
 
         final HistoryTrendPlugin plugin = new HistoryTrendPlugin();
-        plugin.readResults(configuration, visitor, resultsDirectory);
+        Allure.step(
+                "Read corrupted history trend data from " + trend, () -> plugin.readResults(
+                        configuration,
+                        visitor,
+                        resultsDirectory
+                )
+        );
 
         final ArgumentCaptor<List<HistoryTrendItem>> captor = ArgumentCaptor.captor();
         verify(visitor, times(1))
@@ -144,14 +179,20 @@ class HistoryTrendPluginTest {
         assertThat(captor.getValue()).hasSize(0);
     }
 
+    /**
+     * Verifies aggregating for empty report for history trend aggregation.
+     */
+    @Description
     @Test
     void shouldAggregateForEmptyReport() {
         final Configuration configuration = mock(Configuration.class);
 
         final HistoryTrendPlugin.JsonAggregator aggregator = new HistoryTrendPlugin.JsonAggregator();
         final ReportStorage reportStorage = mock();
-        aggregator.aggregate(configuration, Collections.emptyList(), reportStorage);
-
+        Allure.step(
+                "Aggregate history trend widget for an empty report",
+                () -> aggregator.aggregate(configuration, Collections.emptyList(), reportStorage)
+        );
 
         final ArgumentCaptor<List<HistoryTrendItem>> captor = ArgumentCaptor.captor();
         verify(reportStorage, times(1)).addDataJson(eq("history/history-trend.json"), captor.capture());
@@ -164,21 +205,32 @@ class HistoryTrendPluginTest {
 
         assertThat(captor.getValue())
                 .hasSize(1)
-                .extracting(HistoryTrendItem::getBuildOrder,
-                        HistoryTrendItem::getReportName, HistoryTrendItem::getReportUrl)
+                .extracting(
+                        HistoryTrendItem::getBuildOrder,
+                        HistoryTrendItem::getReportName, HistoryTrendItem::getReportUrl
+                )
                 .containsExactly(Tuple.tuple(null, null, null));
 
     }
 
+    /**
+     * Verifies resolving data for history trend aggregation.
+     */
+    @Description
     @Test
     void shouldGetData() {
         final List<HistoryTrendItem> history = randomHistoryTrendItems();
-        final List<HistoryTrendItem> data = HistoryTrendPlugin.getData(createSingleLaunchResults(
-                singletonMap(HISTORY_TREND_BLOCK_NAME, history),
-                randomTestResult().setStatus(Status.PASSED),
-                randomTestResult().setStatus(Status.FAILED),
-                randomTestResult().setStatus(Status.FAILED)
-        ));
+        final List<HistoryTrendItem> data = Allure.step(
+                "Build history trend data with previous trend entries and three current results",
+                () -> HistoryTrendPlugin.getData(
+                        createSingleLaunchResults(
+                                singletonMap(HISTORY_TREND_BLOCK_NAME, history),
+                                randomTestResult().setStatus(Status.PASSED),
+                                randomTestResult().setStatus(Status.FAILED),
+                                randomTestResult().setStatus(Status.FAILED)
+                        )
+                )
+        );
 
         assertThat(data)
                 .hasSize(1 + history.size())
@@ -194,6 +246,10 @@ class HistoryTrendPluginTest {
 
     }
 
+    /**
+     * Verifies finding latest executor for history trend aggregation.
+     */
+    @Description
     @Test
     void shouldFindLatestExecutor() {
         final Map<String, Object> extra1 = new HashMap<>();
@@ -206,19 +262,24 @@ class HistoryTrendPluginTest {
         extra2.put(EXECUTORS_BLOCK_NAME, new ExecutorInfo().setBuildOrder(7L));
 
         final List<LaunchResults> launchResults = Arrays.asList(
-                createLaunchResults(extra1,
+                createLaunchResults(
+                        extra1,
                         randomTestResult().setStatus(Status.PASSED),
                         randomTestResult().setStatus(Status.FAILED),
                         randomTestResult().setStatus(Status.FAILED)
                 ),
-                createLaunchResults(extra2,
+                createLaunchResults(
+                        extra2,
                         randomTestResult().setStatus(Status.PASSED),
                         randomTestResult().setStatus(Status.FAILED),
                         randomTestResult().setStatus(Status.FAILED)
                 )
         );
 
-        final List<HistoryTrendItem> data = HistoryTrendPlugin.getData(launchResults);
+        final List<HistoryTrendItem> data = Allure.step(
+                "Build history trend data and choose the latest executor",
+                () -> HistoryTrendPlugin.getData(launchResults)
+        );
 
         assertThat(data)
                 .hasSize(1 + history1.size() + history2.size());
@@ -229,6 +290,10 @@ class HistoryTrendPluginTest {
                 .hasFieldOrPropertyWithValue("buildOrder", 7L);
     }
 
+    /**
+     * Verifies processing null build order for history trend aggregation.
+     */
+    @Description
     @Test
     void shouldProcessNullBuildOrder() {
         final List<HistoryTrendItem> history = randomHistoryTrendItems();
@@ -237,18 +302,23 @@ class HistoryTrendPluginTest {
         extra.put(EXECUTORS_BLOCK_NAME, new ExecutorInfo().setBuildOrder(null));
 
         final List<LaunchResults> launchResults = Arrays.asList(
-                createLaunchResults(extra,
+                createLaunchResults(
+                        extra,
                         randomTestResult().setStatus(Status.PASSED),
                         randomTestResult().setStatus(Status.FAILED),
                         randomTestResult().setStatus(Status.FAILED)
                 ),
-                createLaunchResults(extra,
+                createLaunchResults(
+                        extra,
                         randomTestResult().setStatus(Status.PASSED),
                         randomTestResult().setStatus(Status.FAILED),
                         randomTestResult().setStatus(Status.FAILED)
                 )
         );
-        final List<HistoryTrendItem> data = HistoryTrendPlugin.getData(launchResults);
+        final List<HistoryTrendItem> data = Allure.step(
+                "Build history trend data with null build order",
+                () -> HistoryTrendPlugin.getData(launchResults)
+        );
 
         assertThat(data)
                 .hasSize(1 + 2 * history.size());

@@ -5,9 +5,20 @@ import org.gradle.kotlin.dsl.support.unzipTo
 plugins {
     application
     id("com.netflix.nebula.ospackage")
+    id("io.qameta.allure")
 }
 
 description = "Allure Commandline"
+
+allure {
+    version.set("2.34.0")
+    adapter {
+        allureJavaVersion.set("2.34.0")
+        aspectjVersion.set("1.9.25.1")
+        autoconfigure.set(false)
+        aspectjWeaver.set(true)
+    }
+}
 
 application {
     mainClass.set("io.qameta.allure.CommandLine")
@@ -38,16 +49,21 @@ tasks.distTar {
     compression = Compression.GZIP
 }
 
-val main = sourceSets.getByName("main")
-
 val startScripts by tasks.existing(CreateStartScripts::class) {
     applicationName = "allure"
-    classpath = files("src/lib/*", "src/lib/config")
+    classpath = files(tasks.jar) + configurations.runtimeClasspath.get() + files("src/dist/lib/config")
     doLast {
-        unixScript.writeText(unixScript.readText()
-                .replace(Regex("(?m)^APP_HOME="), "export APP_HOME=")
-                .replace("\$(uname)\" = \"Darwin", "")
-        )
+        val classpathLine = Regex("(?m)^set CLASSPATH=.*$")
+        val script = windowsScript.readText()
+        val matches = classpathLine.findAll(script).toList()
+
+        if (matches.size != 1) {
+            throw GradleException("Expected exactly one CLASSPATH line in ${windowsScript}, found ${matches.size}")
+        }
+
+        windowsScript.writeText(classpathLine.replace(script) {
+            "set CLASSPATH=%APP_HOME%\\lib\\*;%APP_HOME%\\lib\\config"
+        })
     }
 }
 
@@ -126,12 +142,13 @@ dependencies {
     allurePlugin(project(path = ":xunit-xml-plugin", configuration = "allurePlugin"))
     annotationProcessor("org.projectlombok:lombok")
     compileOnly("org.projectlombok:lombok")
-    implementation("ch.qos.logback:logback-classic")
+    implementation("org.slf4j:slf4j-jdk14")
     implementation("com.beust:jcommander")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
     implementation("commons-io:commons-io")
     implementation(project(":allure-generator"))
+    testImplementation("io.qameta.allure:allure-assertj")
     testImplementation("io.qameta.allure:allure-junit-platform")
     testImplementation("org.apache.commons:commons-lang3")
     testImplementation("org.assertj:assertj-core")

@@ -8,13 +8,18 @@
       "name": "Ważność"
     },
     "status": {
-      "name": "Status"
+      "name": "Stan"
     },
     "trend": {
-      "empty": "Brak czegokolwiek do pokazania"
+      "empty": "Brak czegokolwiek do pokazania",
+      "reportLink": "Otwórz raport dla {{name}}"
     }
   },
   "component": {
+    "markToggle": {
+      "hideCases": "Ukryj wyniki testów oznaczone jako {{mark}}",
+      "showCases": "Pokaż wyniki testów oznaczone jako {{mark}}"
+    },
     "statusToggle": {
       "hideCases": "Ukryj rezultaty testów ze statusem {{status}}",
       "showCases": "Pokaż rezultaty testów ze statusem {{status}}"
@@ -25,12 +30,16 @@
       "filter": "Filtrowanie według statusu",
       "filter-marks": "Filtrowanie według oznaczenia",
       "filtered": {
-        "shown_0": "{{count}} pokazany",
-        "shown_1": "{{count}} pokazane",
-        "shown_2": "{{count}} pokazanych",
-        "total_0": "{{count}} rezultat testu",
-        "total_1": "{{count}} rezultaty testów",
-        "total_2": "{{count}} rezultatów testów"
+        "shown": "{{count}} pokazany",
+        "total": "{{count}} rezultat testu",
+        "shown_one": "{{count}} pokazany",
+        "shown_few": "{{count}} pokazane",
+        "shown_many": "{{count}} pokazanych",
+        "shown_other": "{{count}} pokazany",
+        "total_one": "{{count}} rezultat testu",
+        "total_few": "{{count}} rezultaty testów",
+        "total_many": "{{count}} rezultatów testów",
+        "total_other": "{{count}} rezultatów testów"
       },
       "groups": "Przełącz informacje o grupach",
       "time": {
@@ -47,13 +56,31 @@
           "tooltip": "Czas od uruchomienia pierwszego testu do zakończenia ostatniego testu"
         }
       },
-      "unknown": "<Pusty>"
+      "unknown": "<Pusty>",
+      "noItemSelected": "Nie wybrano elementu",
+      "search": "Szukaj wyników testów"
     },
     "widgetStatus": {
       "showAll": "Pokaż wszystko",
-      "total_0": "Razem {{count}} pozycja",
-      "total_1": "Razem {{count}} pozycje",
-      "total_2": "Razem {{count}} pozycji"
+      "total": "Razem {{count}} pozycja",
+      "total_one": "Razem {{count}} pozycja",
+      "total_few": "Razem {{count}} pozycje",
+      "total_many": "Razem {{count}} pozycji",
+      "total_other": "Razem {{count}} pozycji"
+    },
+    "attachment": {
+      "download": "Kliknij, aby pobrać załącznik",
+      "videoNotSupported": "Twoja przeglądarka nie obsługuje tagu video",
+      "htmlPreviewTitle": "Podgląd załącznika HTML: {{name}}",
+      "previewSizeExceeded": "Podgląd załącznika jest wyłączony, ponieważ załącznik jest większy niż {{size}}.",
+      "htmlPreviewSizeExceeded": "Podgląd HTML jest wyłączony, ponieważ załącznik jest większy niż {{size}}.",
+      "htmlPreviewInvalid": "Podgląd HTML jest wyłączony, ponieważ załącznik nie wygląda jak HTML."
+    },
+    "screenDiff": {
+      "empty": "Nie podano danych różnic",
+      "name": "Różnice ekranu",
+      "showDiff": "Pokaż różnice",
+      "showOverlay": "Pokaż nakładkę"
     }
   },
   "controls": {
@@ -64,11 +91,19 @@
     "collapse": "Zwiń",
     "expand": "Rozwiń",
     "fullscreen": "Pełny ekran",
-    "language": "Zmień język"
+    "language": "Zmień język",
+    "languageShort": "Język",
+    "lightTheme": "Jasny motyw",
+    "darkTheme": "Ciemny motyw",
+    "loading": "Ładowanie...",
+    "close": "Zamknij"
   },
   "errors": {
     "missedAttachment": "Nie znaleziono załącznika",
-    "notFound": "Nie znaleziono"
+    "notFound": "Nie znaleziono",
+    "loadingFailed": "Nie udało się załadować danych",
+    "tabNotFound": "Nie znaleziono karty „{{tab}}”",
+    "testResultNotFound": "Nie znaleziono wyniku testu o uid \"{{uid}}\""
   },
   "marks": {
     "flaky": "Niestabilny",
@@ -81,7 +116,7 @@
     "duration": "czas trwania",
     "name": "nazwa",
     "order": "kolejność",
-    "status": "status"
+    "status": "stan"
   },
   "status": {
     "broken": "Uszkodzony",
@@ -94,20 +129,29 @@
     "categories": {
       "name": "Kategorie"
     },
+    "behaviors": {
+      "name": "Zachowania"
+    },
     "graph": {
       "name": "Wykresy"
     },
     "overview": {
       "name": "Podsumowanie"
     },
+    "packages": {
+      "name": "Pakiety"
+    },
     "suites": {
       "name": "Zestawy"
     },
     "timeline": {
       "name": "Oś czasowa",
-      "selected_0": "{{count}} wybrany test ({{percent}}%) z czasem trwania powyżej {{duration}}",
-      "selected_1": "{{count}} wybrane testy ({{percent}}%) z czasem trwania powyżej {{duration}}",
-      "selected_2": "{{count}} wybranych testów ({{percent}}%) z czasem trwania powyżej {{duration}}"
+      "selected": "{{count}} wybrany test ({{percent}}%) z czasem trwania powyżej {{duration}}",
+      "selected_one": "{{count}} wybrany test ({{percent}}%) z czasem trwania powyżej {{duration}}",
+      "selected_few": "{{count}} wybrane testy ({{percent}}%) z czasem trwania powyżej {{duration}}",
+      "selected_many": "{{count}} wybranych testów ({{percent}}%) z czasem trwania powyżej {{duration}}",
+      "selected_other": "{{count}} wybranych testów ({{percent}}%) z czasem trwania powyżej {{duration}}",
+      "resultLink": "Otwórz wynik testu {{name}}, status {{status}}"
     }
   },
   "testResult": {
@@ -122,13 +166,20 @@
     },
     "execution": {
       "body": "Ciało testu",
+      "downloadAttachment": {
+        "tooltip": "Otwórz załącznik w nowej karcie"
+      },
       "name": "Wykonanie",
       "setup": "Przygotowanie",
-      "teardown": "Zakończenie"
+      "teardown": "Zakończenie",
+      "empty": "Brak informacji o wykonaniu testu."
     },
     "history": {
+      "empty": "Brak dostępnych informacji o historii.",
       "name": "Historia",
-      "successRate": "Współczynnik powodzenia"
+      "statistic": "{{passed}} z {{total}}",
+      "successRate": "Współczynnik powodzenia",
+      "time": "{{date}} o {{time}}"
     },
     "links": {
       "name": "Odnośniki"
@@ -144,7 +195,8 @@
     },
     "retries": {
       "empty": "Brak dostępnych informacji o powtórzeniach testów",
-      "name": "Powtórzenia"
+      "name": "Powtórzenia",
+      "time": "{{date}} o {{time}}"
     },
     "severity": {
       "name": "Ważność",
@@ -156,14 +208,21 @@
     },
     "stats": {
       "count": {
-        "attachments_0": "{{count}} załącznik",
-        "attachments_1": "{{count}} załączniki",
-        "attachments_2": "{{count}} załączników",
-        "parameters_0": "{{count}} parametr",
-        "parameters_1": "{{count}} parametry",
-        "parameters_2": "{{count}} parametrów",
+        "attachments": "{{count}} załącznik",
+        "parameters": "{{count}} parametr",
         "steps": "{{count}} podetap",
-        "steps_plural": "{{count}} podetapy"
+        "attachments_one": "{{count}} załącznik",
+        "attachments_few": "{{count}} załączniki",
+        "attachments_many": "{{count}} załączników",
+        "attachments_other": "{{count}} załączników",
+        "parameters_one": "{{count}} parametr",
+        "parameters_few": "{{count}} parametry",
+        "parameters_many": "{{count}} parametrów",
+        "parameters_other": "{{count}} parametrów",
+        "steps_one": "{{count}} podetap",
+        "steps_few": "{{count}} podetapy",
+        "steps_many": "{{count}} podetapy",
+        "steps_other": "{{count}} podetapy"
       }
     },
     "status": {
@@ -177,6 +236,10 @@
   "widget": {
     "categories": {
       "name": "Kategorie"
+    },
+    "behaviors": {
+      "name": "Funkcje według historii",
+      "showAll": "pokaż wszystko"
     },
     "categoriesTrend": {
       "name": "Trend kategorii"
@@ -206,15 +269,19 @@
     },
     "summary": {
       "aggregatedName": "Raport zbiorczy",
-      "launches_0": "uruchomienie",
-      "launches_1": "uruchomienia",
-      "launches_3": "uruchomień",
-      "testResults_0": "przypadek testowy",
-      "testResults_1": "przypadki testowe",
-      "testResults_3": "przypadków testowych"
+      "launches": "uruchomienie",
+      "testResults": "przypadek testowy",
+      "launches_one": "uruchomienie",
+      "launches_few": "uruchomienia",
+      "launches_many": "uruchomień",
+      "launches_other": "uruchomień",
+      "testResults_one": "przypadek testowy",
+      "testResults_few": "przypadki testowe",
+      "testResults_many": "przypadków testowych",
+      "testResults_other": "przypadków testowych"
     },
     "trend": {
-      "name": "Trend"
+      "name": "Tendencja"
     }
   }
 }

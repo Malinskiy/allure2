@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package io.qameta.allure;
 
-import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import io.qameta.allure.command.GenerateCommand;
@@ -26,21 +25,29 @@ import io.qameta.allure.command.ServeCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.ProviderNotFoundException;
+import java.security.CodeSource;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.slf4j.Logger.ROOT_LOGGER_NAME;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.StreamHandler;
 
 /**
  * @author eroshenkoam Artem Eroshenko
  */
-@SuppressWarnings({
-        "DeclarationOrder",
-        "PMD.MoreThanOneLogger",
-})
 public class CommandLine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandLine.class);
@@ -50,6 +57,10 @@ public class CommandLine {
     protected static final String GENERATE_COMMAND = "generate";
     protected static final String OPEN_COMMAND = "open";
     protected static final String PLUGIN_COMMAND = "plugin";
+    private static final String CONFIG_DIRECTORY = "config";
+    private static final String PLUGINS_DIRECTORY = "plugins";
+    private static final String DEFAULT_CONFIG_FILE_NAME = "allure.yml";
+    private static final String LIB_DIRECTORY = "lib";
 
     private final MainCommand mainCommand;
     private final ServeCommand serveCommand;
@@ -79,21 +90,76 @@ public class CommandLine {
     }
 
     public static void main(final String[] args) throws InterruptedException {
-        final String allureHome = System.getenv("APP_HOME");
-        final CommandLine commandLine;
-        if (Objects.isNull(allureHome)) {
-            LOGGER.info("APP_HOME is not set, using default configuration");
-            commandLine = new CommandLine((Path) null);
-        } else {
-            commandLine = new CommandLine(Paths.get(allureHome));
+        final Optional<Path> allureHome = resolveAllureHome(System.getenv("APP_HOME"));
+        if (!allureHome.isPresent()) {
+            LOGGER.info("Allure home is not set, using default configuration");
         }
+        final CommandLine commandLine = new CommandLine(allureHome.orElse(null));
         final ExitCode exitCode = commandLine
                 .parse(args)
                 .orElseGet(commandLine::run);
         System.exit(exitCode.getCode());
     }
 
-    @SuppressWarnings({"PMD.AvoidLiteralsInIfCondition", "ReturnCount"})
+    static Optional<Path> resolveAllureHome(final String allureHome, final URI codeSource) {
+        if (Objects.nonNull(allureHome)) {
+            return Optional.of(Paths.get(allureHome));
+        }
+        return inferAllureHome(codeSource);
+    }
+
+    private static Optional<Path> resolveAllureHome(final String allureHome) {
+        if (Objects.nonNull(allureHome)) {
+            return Optional.of(Paths.get(allureHome));
+        }
+        return getCodeSource()
+                .flatMap(CommandLine::inferAllureHome);
+    }
+
+    private static Optional<URI> getCodeSource() {
+        try {
+            return Optional.ofNullable(CommandLine.class.getProtectionDomain().getCodeSource())
+                    .map(CodeSource::getLocation)
+                    .map(location -> {
+                        try {
+                            return location.toURI();
+                        } catch (URISyntaxException e) {
+                            LOGGER.debug("Could not resolve commandline location", e);
+                            return null;
+                        }
+                    });
+        } catch (SecurityException e) {
+            LOGGER.debug("Could not access commandline location", e);
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<Path> inferAllureHome(final URI codeSource) {
+        try {
+            final Path location = Paths.get(codeSource).toAbsolutePath().normalize();
+            final Path lib = Files.isDirectory(location) ? location : location.getParent();
+            if (Objects.isNull(lib)
+                    || Objects.isNull(lib.getFileName())
+                    || !LIB_DIRECTORY.equals(lib.getFileName().toString())) {
+                return Optional.empty();
+            }
+            final Path home = lib.getParent();
+            return isAllureHome(home)
+                    ? Optional.of(home)
+                    : Optional.empty();
+        } catch (IllegalArgumentException | FileSystemNotFoundException | ProviderNotFoundException
+                | SecurityException e) {
+            LOGGER.debug("Could not infer Allure home from commandline location {}", codeSource, e);
+            return Optional.empty();
+        }
+    }
+
+    private static boolean isAllureHome(final Path home) {
+        return Objects.nonNull(home)
+                && Files.isRegularFile(home.resolve(CONFIG_DIRECTORY).resolve(DEFAULT_CONFIG_FILE_NAME))
+                && Files.isDirectory(home.resolve(PLUGINS_DIRECTORY));
+    }
+
     public Optional<ExitCode> parse(final String... args) {
         if (args.length == 0) {
             printUsage(commander);
@@ -118,25 +184,15 @@ public class CommandLine {
         return Optional.empty();
     }
 
-    @SuppressWarnings({
-            "CyclomaticComplexity",
-            "NPathComplexity",
-            "ReturnCount",
-            "PMD.NPathComplexity",
-            "PMD.CyclomaticComplexity",
-            "PMD.ExcessiveMethodLength",
-            "PMD.SystemPrintln",
-    })
+    @SuppressWarnings("PMD.SystemPrintln")
     public ExitCode run() {
-        final ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger)
-                LoggerFactory.getLogger(ROOT_LOGGER_NAME);
-
+        final java.util.logging.Logger rootLogger = initRootLogger();
         if (mainCommand.getVerboseOptions().isQuiet()) {
             rootLogger.setLevel(Level.OFF);
         }
 
         if (mainCommand.getVerboseOptions().isVerbose()) {
-            rootLogger.setLevel(Level.DEBUG);
+            rootLogger.setLevel(Level.FINE);
         }
 
         if (mainCommand.isVersion()) {
@@ -199,5 +255,64 @@ public class CommandLine {
 
     private void printUsage(final JCommander commander) {
         commander.usage();
+    }
+
+    private static java.util.logging.Logger initRootLogger() {
+        final java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("");
+        for (Handler handler : rootLogger.getHandlers()) {
+            rootLogger.removeHandler(handler);
+        }
+
+        final Handler handler = new StdOutHandler();
+        handler.setLevel(Level.ALL);
+        rootLogger.addHandler(handler);
+        return rootLogger;
+    }
+
+    /**
+     * Print only a message from LogRecord.
+     */
+    private static final class MessageOnlyFormatter extends Formatter {
+
+        @Override
+        public String format(final LogRecord record) {
+            final StringBuilder builder = new StringBuilder();
+            builder.append(formatMessage(record))
+                    .append(System.lineSeparator());
+
+            final Throwable thrown = record.getThrown();
+            if (thrown != null) {
+                final StringWriter stringWriter = new StringWriter();
+                final PrintWriter printWriter = new PrintWriter(stringWriter);
+                thrown.printStackTrace(printWriter);
+                printWriter.flush();
+                builder.append(stringWriter);
+            }
+
+            return builder.toString();
+        }
+    }
+
+    /**
+     * This Handler publishes log records to System.out.
+     * By default the MessageOnlyFormatter is used to only print log messages.
+     */
+    @SuppressWarnings("PMD.AvoidSynchronizedAtMethodLevel")
+    private static final class StdOutHandler extends StreamHandler {
+
+        StdOutHandler() {
+            super(System.out, new MessageOnlyFormatter());
+        }
+
+        @Override
+        public synchronized void publish(final LogRecord record) {
+            super.publish(record);
+            flush();
+        }
+
+        @Override
+        public synchronized void close() {
+            flush();
+        }
     }
 }

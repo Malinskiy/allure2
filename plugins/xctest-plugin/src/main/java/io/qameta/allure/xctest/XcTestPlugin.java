@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,30 +18,36 @@ package io.qameta.allure.xctest;
 import io.qameta.allure.Reader;
 import io.qameta.allure.core.Configuration;
 import io.qameta.allure.core.ResultsVisitor;
+import io.qameta.allure.entity.Attachment;
 import io.qameta.allure.entity.Status;
 import io.qameta.allure.entity.Step;
 import io.qameta.allure.entity.TestResult;
-import io.qameta.allure.entity.Timeable;
+import io.qameta.allure.entity.Time;
+import io.qameta.allure.parser.ClasspathEntityResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 import xmlwise.Plist;
+import xmlwise.XmlElement;
 import xmlwise.XmlParseException;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.DateTimeException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.regex.Pattern;
 
 import static io.qameta.allure.entity.LabelName.RESULT_FORMAT;
 import static io.qameta.allure.entity.LabelName.SUITE;
@@ -59,14 +65,14 @@ public class XcTestPlugin implements Reader {
     private static final String TESTABLE_SUMMARIES = "TestableSummaries";
     private static final String TESTS = "Tests";
     private static final String SUB_TESTS = "Subtests";
-    private static final String TITLE = "Title";
     private static final String SUB_ACTIVITIES = "SubActivities";
     private static final String ACTIVITY_SUMMARIES = "ActivitySummaries";
     private static final String HAS_SCREENSHOT = "HasScreenshotData";
 
     private static final String ATTACHMENTS = "Attachments";
     private static final String ATTACHMENT_FILENAME = "Filename";
-
+    private static final List<String> ALLOWED_SCREENSHOT_EXT = Arrays.asList("jpg", "png");
+    private static final Pattern ATTACHMENT_SOURCE_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]{1,100}$");
 
     @Override
     public void readResults(final Configuration configuration,
@@ -79,12 +85,36 @@ public class XcTestPlugin implements Reader {
     private void readSummaries(final Path directory, final Path testSummariesPath, final ResultsVisitor visitor) {
         try {
             LOGGER.info("Parse file {}", testSummariesPath);
-            final Map<String, Object> loaded = Plist.load(testSummariesPath.toFile());
+            final Map<String, Object> loaded = loadPlist(testSummariesPath);
             final List<?> summaries = asList(loaded.getOrDefault(TESTABLE_SUMMARIES, emptyList()));
             summaries.forEach(summary -> parseSummary(directory, summary, visitor));
-        } catch (XmlParseException | IOException e) {
-            LOGGER.error("Could not parse file {}: {}", testSummariesPath, e);
+        } catch (XmlParseException | SAXException | ParserConfigurationException | IOException e) {
+            LOGGER.error("Could not parse file {}", testSummariesPath, e);
         }
+    }
+
+    private Map<String, Object> loadPlist(final Path testSummariesPath)
+            throws IOException, ParserConfigurationException, SAXException, XmlParseException {
+        final DocumentBuilderFactory factory = newDocumentBuilderFactory();
+        final DocumentBuilder builder = factory.newDocumentBuilder();
+        builder.setEntityResolver(new ClasspathEntityResolver());
+
+        final Document document = builder.parse(testSummariesPath.toFile());
+        return Plist.fromXmlElement(new XmlElement(document.getDocumentElement()));
+    }
+
+    private DocumentBuilderFactory newDocumentBuilderFactory() throws ParserConfigurationException {
+        final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setValidating(false);
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        return factory;
     }
 
     private void parseSummary(final Path directory, final Object summary, final ResultsVisitor visitor) {
@@ -94,7 +124,6 @@ public class XcTestPlugin implements Reader {
         tests.forEach(test -> parseTestSuite(name, test, directory, visitor));
     }
 
-    @SuppressWarnings("unchecked")
     private void parseTestSuite(final String parentName, final Object testSuite,
                                 final Path directory, final ResultsVisitor visitor) {
         final Map<String, Object> props = asMap(testSuite);
@@ -115,32 +144,31 @@ public class XcTestPlugin implements Reader {
         result.addLabelIfNotExists(SUITE, suiteName);
 
         asList(props.getOrDefault(ACTIVITY_SUMMARIES, emptyList()))
-                .forEach(activity -> parseStep(directory, result, activity, visitor));
+                .forEach(activity -> parseStep(directory, result, null, activity, visitor));
         final Optional<Step> lastFailedStep = result.getTestStage().getSteps().stream()
-                .filter(s -> !s.getStatus().equals(Status.PASSED)).sorted((a, b) -> -1).findFirst();
+                .filter(s -> !s.getStatus().equals(Status.PASSED))
+                .reduce((first, second) -> second);
         lastFailedStep.map(Step::getStatusMessage).ifPresent(result::setStatusMessage);
         lastFailedStep.map(Step::getStatusTrace).ifPresent(result::setStatusTrace);
         visitor.visitTestResult(result);
     }
 
-    private void parseStep(final Path directory, final Object parent,
+    private void parseStep(final Path directory, final TestResult testResult, final Step parent,
                            final Object activity, final ResultsVisitor visitor) {
-
         final Map<String, Object> props = asMap(activity);
-        final String activityTitle = (String) props.get(TITLE);
+        final Step step = ResultsUtils.getStep(props);
 
-        if (activityTitle.startsWith("Start Test at")) {
-            getStartTime(activityTitle).ifPresent(start -> {
-                final Timeable withTime = (Timeable) parent;
-                final long duration = withTime.getTime().getDuration();
-                withTime.getTime().setStart(start);
-                withTime.getTime().setStop(start + duration);
-            });
+        if (step.getName().startsWith("Start Test at")) {
+            final Time trTime = testResult.getTime();
+            final Long start = step.getTime().getStart();
+            trTime.setStart(start);
+            if (Objects.nonNull(trTime.getDuration()) && Objects.nonNull(start)) {
+                trTime.setStop(start + trTime.getDuration());
+            }
             return;
         }
-        final Step step = ResultsUtils.getStep(props);
-        if (activityTitle.startsWith("Assertion Failure:")) {
-            step.setStatusMessage(activityTitle);
+        if (step.getName().startsWith("Assertion Failure:")) {
+            step.setStatusMessage(step.getName());
             step.setStatus(Status.FAILED);
         }
 
@@ -152,19 +180,18 @@ public class XcTestPlugin implements Reader {
             addAttachments(directory, visitor, props, step);
         }
 
-        if (parent instanceof TestResult) {
-            ((TestResult) parent).getTestStage().getSteps().add(step);
-        }
-
-        if (parent instanceof Step) {
-            ((Step) parent).getSteps().add(step);
+        if (Objects.nonNull(parent)) {
+            parent.getSteps().add(step);
+        } else {
+            testResult.getTestStage().getSteps().add(step);
         }
 
         asList(props.getOrDefault(SUB_ACTIVITIES, emptyList()))
-                .forEach(subActivity -> parseStep(directory, step, subActivity, visitor));
+                .forEach(subActivity -> parseStep(directory, testResult, step, subActivity, visitor));
 
         final Optional<Step> lastFailedStep = step.getSteps().stream()
-                .filter(s -> !s.getStatus().equals(Status.PASSED)).sorted((a, b) -> -1).findFirst();
+                .filter(s -> !s.getStatus().equals(Status.PASSED))
+                .reduce((first, second) -> second);
         lastFailedStep.map(Step::getStatus).ifPresent(step::setStatus);
         lastFailedStep.map(Step::getStatusMessage).ifPresent(step::setStatusMessage);
         lastFailedStep.map(Step::getStatusTrace).ifPresent(step::setStatusTrace);
@@ -175,26 +202,43 @@ public class XcTestPlugin implements Reader {
                                 final Map<String, Object> props,
                                 final Step step) {
         final String uuid = props.get("UUID").toString();
-        final Path attachments = directory.resolve(ATTACHMENTS);
-        Stream.of("jpg", "png")
-                .map(ext -> attachments.resolve(String.format("Screenshot_%s.%s", uuid, ext)))
-                .filter(Files::exists)
-                .map(visitor::visitAttachmentFile)
-                .forEach(step.getAttachments()::add);
+        if (!ATTACHMENT_SOURCE_PATTERN.matcher(uuid).matches()) {
+            return;
+        }
+
+        final Path attachments = directory.resolve(ATTACHMENTS).normalize();
+        for (String ext : ALLOWED_SCREENSHOT_EXT) {
+            final Path resolved = attachments
+                    .resolve(String.format("Screenshot_%s.%s", uuid, ext))
+                    .normalize();
+
+            if (resolved.startsWith(attachments)
+                    && Files.isRegularFile(resolved, LinkOption.NOFOLLOW_LINKS)) {
+                final Attachment attachment = visitor.visitAttachmentFile(resolved);
+                step.getAttachments().add(attachment);
+            }
+        }
     }
 
     private void addAttachments(final Path directory,
                                 final ResultsVisitor visitor,
                                 final Map<String, Object> props,
                                 final Step step) {
-        final Path attachments = directory.resolve(ATTACHMENTS);
-        asList(props.get(ATTACHMENTS)).stream()
-                .map(this::asMap)
-                .map(p -> p.get(ATTACHMENT_FILENAME).toString())
-                .map(attachments::resolve)
-                .filter(Files::exists)
-                .map(visitor::visitAttachmentFile)
-                .forEach(step.getAttachments()::add);
+        final Path attachments = directory.resolve(ATTACHMENTS).normalize();
+        for (Object o : asList(props.get(ATTACHMENTS))) {
+            final Map<String, Object> p = asMap(o);
+            final String fileName = p.get(ATTACHMENT_FILENAME).toString();
+            if (!ATTACHMENT_SOURCE_PATTERN.matcher(fileName).matches()) {
+                return;
+            }
+
+            final Path resolved = attachments.resolve(fileName).normalize();
+            if (resolved.startsWith(attachments)
+                    && Files.isRegularFile(resolved, LinkOption.NOFOLLOW_LINKS)) {
+                final Attachment attachment = visitor.visitAttachmentFile(resolved);
+                step.getAttachments().add(attachment);
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -220,19 +264,9 @@ public class XcTestPlugin implements Reader {
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("Could not read data from {}: {}", directory, e);
+            LOGGER.error("Could not read data from {}", directory, e);
         }
         return result;
-    }
-
-    private static Optional<Long> getStartTime(final String stepName) {
-        try {
-            final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSX", Locale.US);
-            final Date date = dateFormat.parse(stepName.substring(14));
-            return Optional.of(date.getTime());
-        } catch (DateTimeException | ParseException e) {
-            return Optional.empty();
-        }
     }
 
 }

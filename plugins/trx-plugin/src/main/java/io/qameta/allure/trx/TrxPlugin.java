@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import io.qameta.allure.entity.Status;
 import io.qameta.allure.entity.Step;
 import io.qameta.allure.entity.TestResult;
 import io.qameta.allure.entity.Time;
+import io.qameta.allure.parser.ClasspathEntityResolver;
 import io.qameta.allure.parser.XmlElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +60,6 @@ import static java.nio.file.Files.newDirectoryStream;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("PMD.ExcessiveImports")
 public class TrxPlugin implements Reader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TrxPlugin.class);
@@ -106,7 +106,9 @@ public class TrxPlugin implements Reader {
             LOGGER.debug("Parsing file {}", parsedFile);
 
             final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setValidating(false);
             final DocumentBuilder builder = factory.newDocumentBuilder();
+            builder.setEntityResolver(new ClasspathEntityResolver());
             final Document document = builder.parse(parsedFile.toFile());
             final XmlElement testRunElement = new XmlElement(document.getDocumentElement());
             final String elementName = testRunElement.getName();
@@ -217,12 +219,12 @@ public class TrxPlugin implements Reader {
         visitor.visitTestResult(result);
 
         unitTestResult.getFirst(UNIT_TEST_INNER_RESULTS)
-            .ifPresent(innerResults -> {
-                innerResults.get(UNIT_TEST_RESULT_ELEMENT_NAME)
-                    .forEach(unitTestChildResult ->
-                        parseUnitTestResult(unitTestChildResult, tests, context, visitor, result.getLabels())
-                    );
-            });
+                .ifPresent(innerResults -> {
+                    innerResults.get(UNIT_TEST_RESULT_ELEMENT_NAME)
+                            .forEach(
+                                    unitTestChildResult -> parseUnitTestResult(unitTestChildResult, tests, context, visitor, result.getLabels())
+                            );
+                });
     }
 
     protected void parseUnitTestResult(final XmlElement unitTestResult,
@@ -257,12 +259,12 @@ public class TrxPlugin implements Reader {
 
         visitor.visitTestResult(result);
         unitTestResult.getFirst(UNIT_TEST_INNER_RESULTS)
-            .ifPresent(innerResults -> {
-                innerResults.get(UNIT_TEST_RESULT_ELEMENT_NAME)
-                    .forEach(unitTestChildResult ->
-                        parseUnitTestResult(unitTestChildResult, tests, context, visitor, result.getLabels())
-                    );
-            });
+                .ifPresent(innerResults -> {
+                    innerResults.get(UNIT_TEST_RESULT_ELEMENT_NAME)
+                            .forEach(
+                                    unitTestChildResult -> parseUnitTestResult(unitTestChildResult, tests, context, visitor, result.getLabels())
+                            );
+                });
     }
 
     private List<String> splitLines(final String str) {

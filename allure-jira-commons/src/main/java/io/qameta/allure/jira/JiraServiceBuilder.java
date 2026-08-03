@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import static io.qameta.allure.util.PropertyUtils.requireProperty;
 /**
  * Jira Service builder.
  */
-@SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName")
 public class JiraServiceBuilder {
 
     private static final String JIRA_ENDPOINT = "ALLURE_JIRA_ENDPOINT";

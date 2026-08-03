@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -96,7 +96,8 @@ public abstract class AbstractTrendPlugin<T> extends CompositeAggregator2 implem
     private Stream<JsonNode> getStream(final JsonNode jsonNode) {
         return stream(
                 spliteratorUnknownSize(jsonNode.elements(), Spliterator.ORDERED),
-                false);
+                false
+        );
     }
 
     private Optional<T> parseItem(final Path historyFile, final ObjectMapper mapper, final JsonNode child) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,10 +39,12 @@ public final class ConvertUtils {
     public static <T, R> List<R> convertList(final Collection<T> source,
                                              final Predicate<T> predicate,
                                              final Function<T, R> converter) {
-        return Objects.isNull(source) ? null : source.stream()
-                .filter(predicate)
-                .map(converter)
-                .collect(toList());
+        return Objects.isNull(source)
+                ? null
+                : source.stream()
+                        .filter(predicate)
+                        .map(converter)
+                        .collect(toList());
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -104,8 +104,7 @@ public class DefaultPluginLoader {
     }
 
     private List<URL> jarsInDirectory(final Path directory) {
-        final DirectoryStream.Filter<Path> pathFilter = entry ->
-                Files.isRegularFile(entry) && entry.toString().endsWith(".jar");
+        final DirectoryStream.Filter<Path> pathFilter = entry -> Files.isRegularFile(entry) && entry.toString().endsWith(".jar");
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, pathFilter)) {
             return StreamSupport.stream(stream.spliterator(), false)
                     .filter(Files::isRegularFile)

@@ -3,6 +3,7 @@ import com.github.gradle.node.npm.task.NpmTask
 plugins {
     `java-library`
     id("com.github.node-gradle.node")
+    id("io.qameta.allure")
 }
 
 description = "Allure Report Generator"
@@ -10,7 +11,7 @@ description = "Allure Report Generator"
 node {
     // repository is declared in root settings.gradle.kts
     distBaseUrl.set(null as String?)
-    version.set("20.12.1")
+    version.set("24.14.1")
     download.set(true)
 }
 
@@ -30,14 +31,12 @@ tasks.npmInstall {
 val buildWeb by tasks.creating(NpmTask::class) {
     group = "Build"
     dependsOn(tasks.npmInstall)
-    inputs.file(".prettierrc")
+    inputs.file(".oxfmtrc.json")
+    inputs.file(".oxlintrc.json")
     inputs.file("package-lock.json")
     inputs.file("package.json")
-    inputs.file(".eslintignore")
-    inputs.file(".eslintrc.js")
-    inputs.file("babel.config.js")
+    inputs.file("vite.config.mts")
     inputs.files(fileTree("src/main/javascript"))
-    inputs.files(fileTree("webpack"))
 
     outputs.dir(generatedStatic)
 
@@ -47,16 +46,35 @@ val buildWeb by tasks.creating(NpmTask::class) {
 val testWeb by tasks.creating(NpmTask::class) {
     group = "Verification"
     dependsOn(tasks.npmInstall)
-    inputs.file(".prettierrc")
+    inputs.file(".oxfmtrc.json")
+    inputs.file(".oxlintrc.json")
     inputs.file("package-lock.json")
     inputs.file("package.json")
-    inputs.file(".eslintignore")
-    inputs.file(".eslintrc.js")
-    inputs.file("babel.config.js")
+    inputs.file("playwright.config.mts")
+    inputs.file("tsconfig.json")
+    inputs.file("vite.config.mts")
+    inputs.files(fileTree("scripts"))
     inputs.files(fileTree("src/main/javascript"))
-    inputs.files(fileTree("webpack"))
+    inputs.files(fileTree("tests"))
 
     args.set(listOf("run", "test", "--silent"))
+}
+
+val testE2E by tasks.creating(NpmTask::class) {
+    group = "Verification"
+    dependsOn(tasks.npmInstall, ":allure-commandline:build")
+    inputs.file("package-lock.json")
+    inputs.file("package.json")
+    inputs.file("playwright.config.mts")
+    inputs.files(fileTree("scripts"))
+    inputs.files(fileTree("tests/fixtures/raw"))
+    inputs.files(fileTree("tests/e2e"))
+
+    outputs.dir("build/e2e")
+    outputs.dir("build/allure-results")
+    outputs.dir("test-results")
+
+    args.set(listOf("run", "e2e", "--silent"))
 }
 
 val cleanUpDemoReport by tasks.creating(Delete::class) {
@@ -70,7 +88,7 @@ val generateDemoReport by tasks.creating(JavaExec::class) {
     mainClass.set("io.qameta.allure.DummyReportGenerator")
     classpath = sourceSets.getByName("test").runtimeClasspath
     systemProperty("allure.plugins.directory", "build/plugins")
-    setArgs(arrayListOf(file("test-data/new-demo"), file("build/demo-report")))
+    setArgs(arrayListOf(file("test-data/demo"), file("build/demo-report")))
 }
 
 val dev by tasks.creating(NpmTask::class) {
@@ -93,6 +111,16 @@ tasks.test {
     dependsOn(testWeb)
 }
 
+allure {
+    version.set("2.34.0")
+    adapter {
+        allureJavaVersion.set("2.34.0")
+        aspectjVersion.set("1.9.25.1")
+        autoconfigure.set(false)
+        aspectjWeaver.set(true)
+    }
+}
+
 val allurePlugin by configurations.existing
 
 dependencies {
@@ -110,8 +138,9 @@ dependencies {
     implementation("javax.xml.bind:jaxb-api")
     implementation("org.allurefw:allure1-model")
     implementation("org.apache.httpcomponents:httpclient")
-    implementation("org.apache.tika:tika-core")
     implementation("org.freemarker:freemarker")
+    implementation("org.jsoup:jsoup")
+    testImplementation("io.qameta.allure:allure-assertj")
     testImplementation("io.qameta.allure:allure-java-commons")
     testImplementation("io.qameta.allure:allure-junit-platform")
     testImplementation("org.apache.commons:commons-lang3")

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,12 +66,6 @@ import java.util.stream.Collectors;
  * @author Artem Eroshenko eroshenkoam@qameta.io
  * Date: 1/22/14
  */
-@SuppressWarnings({
-        "PMD.ExcessiveImports",
-        "PMD.ClassNamingConventions",
-        "ClassFanOutComplexity",
-        "ClassDataAbstractionCoupling"
-})
 public final class DummyReportGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DummyReportGenerator.class);

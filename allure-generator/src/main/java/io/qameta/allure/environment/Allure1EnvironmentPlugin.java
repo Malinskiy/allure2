@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,16 +43,21 @@ public class Allure1EnvironmentPlugin extends CommonJsonAggregator2 {
     @Override
     protected List<EnvironmentItem> getData(final List<LaunchResults> launches) {
         final List<Map.Entry<String, String>> launchEnvironments = launches.stream()
-                .flatMap(launch -> launch.getExtra(ENVIRONMENT_BLOCK_NAME,
-                        (Supplier<Map<String, String>>) LinkedHashMap::new).entrySet().stream())
+                .flatMap(
+                        launch -> launch.getExtra(
+                                ENVIRONMENT_BLOCK_NAME,
+                                (Supplier<Map<String, String>>) LinkedHashMap::new
+                        ).entrySet().stream()
+                )
                 .collect(toList());
 
         return launchEnvironments.stream()
                 .collect(groupingBy(Map.Entry::getKey, LinkedHashMap::new, mapping(Map.Entry::getValue, toSet())))
                 .entrySet().stream()
-                .map(entry -> new EnvironmentItem()
-                        .setName(entry.getKey())
-                        .setValues(new ArrayList<>(entry.getValue()))
+                .map(
+                        entry -> new EnvironmentItem()
+                                .setName(entry.getKey())
+                                .setValues(new ArrayList<>(entry.getValue()))
                 )
                 .collect(toList());
     }

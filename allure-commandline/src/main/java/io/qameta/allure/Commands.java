@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package io.qameta.allure;
 
-import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import io.qameta.allure.config.ConfigLoader;
 import io.qameta.allure.core.Configuration;
@@ -32,10 +31,8 @@ import org.slf4j.LoggerFactory;
 import java.awt.AWTError;
 import java.awt.Desktop;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +42,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static io.qameta.allure.DefaultResultsVisitor.probeContentType;
 import static java.lang.String.format;
 
 /**
@@ -53,12 +49,11 @@ import static java.lang.String.format;
  *
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings({"ClassDataAbstractionCoupling", "ClassFanOutComplexity", "ReturnCount"})
 public class Commands {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Commands.class);
     private static final String DIRECTORY_EXISTS_MESSAGE = "Allure: Target directory {} for the report is already"
-                                                           + " in use, add a '--clean' option to overwrite";
+            + " in use, add a '--clean' option to overwrite";
 
     private final Path allureHome;
 
@@ -95,12 +90,16 @@ public class Commands {
             return Optional.of(Paths.get(configOptions.getConfigPath()));
         }
         if (Objects.nonNull(configOptions.getConfigDirectory())) {
-            return Optional.of(Paths.get(configOptions.getConfigDirectory())
-                    .resolve(getConfigFileName(configOptions.getProfile())));
+            return Optional.of(
+                    Paths.get(configOptions.getConfigDirectory())
+                            .resolve(getConfigFileName(configOptions.getProfile()))
+            );
         }
         if (Objects.nonNull(allureHome)) {
-            return Optional.of(allureHome.resolve("config")
-                    .resolve(getConfigFileName(configOptions.getProfile())));
+            return Optional.of(
+                    allureHome.resolve("config")
+                            .resolve(getConfigFileName(configOptions.getProfile()))
+            );
         }
         return Optional.empty();
     }
@@ -239,7 +238,7 @@ public class Commands {
         LOGGER.info("Starting web server...");
         final HttpServer server;
         try {
-            server = setUpServer(host, port, reportDirectory);
+            server = LocalReportServer.setUp(host, port, reportDirectory);
             server.start();
         } catch (Exception e) {
             LOGGER.error("Could not serve the report", e);
@@ -247,10 +246,11 @@ public class Commands {
         }
 
         final InetSocketAddress socketAddress = server.getAddress();
-        final URI uri = URI.create("http://"
-                                   + socketAddress.getHostString()
-                                   + ":"
-                                   + socketAddress.getPort()
+        final URI uri = URI.create(
+                "http://"
+                        + socketAddress.getHostString()
+                        + ":"
+                        + socketAddress.getPort()
         );
 
         try {
@@ -262,7 +262,8 @@ public class Commands {
                     e
             );
         }
-        LOGGER.info("Server started at <{}>. Press <Ctrl+C> to exit", uri);
+        LOGGER.info("Local preview server started at <{}>. Press <Ctrl+C> to exit", uri);
+        LOGGER.info(LocalReportServer.LOCAL_SERVE_MESSAGE);
         try {
             Thread.currentThread().join();
         } catch (InterruptedException e) {
@@ -293,9 +294,9 @@ public class Commands {
      * @return created report configuration.
      */
     protected Configuration createReportConfiguration(
-            final ConfigOptions profile,
-            final ReportNameOptions reportNameOptions,
-            final ReportLanguageOptions reportLanguageOptions) {
+                                                      final ConfigOptions profile,
+                                                      final ReportNameOptions reportNameOptions,
+                                                      final ReportLanguageOptions reportLanguageOptions) {
         final DefaultPluginLoader loader = new DefaultPluginLoader();
         final CommandlineConfig commandlineConfig = getConfig(profile);
         final ClassLoader classLoader = getClass().getClassLoader();
@@ -314,48 +315,6 @@ public class Commands {
     }
 
     /**
-     * Set up HttpServer to serve Allure Report.
-     *
-     * @param host            the host
-     * @param port            the port
-     * @param reportDirectory the report directory
-     * @return self for method chaining
-     * @throws IOException the io exception
-     */
-    protected HttpServer setUpServer(final String host, final int port, final Path reportDirectory) throws IOException {
-        final HttpServer server = HttpServer
-                .create(new InetSocketAddress(Objects.isNull(host) ? "localhost" : host, port), 0);
-
-        server.createContext("/", exchange -> {
-            final Path resolve = reportDirectory.resolve("." + exchange.getRequestURI().getPath());
-            if (Files.isDirectory(resolve)) {
-                serveFile(exchange, resolve.resolve("index.html"));
-            } else {
-                serveFile(exchange, resolve);
-            }
-        });
-
-        return server;
-    }
-
-    private static void serveFile(final HttpExchange exchange, final Path resolve) throws IOException {
-        if (Files.isRegularFile(resolve)) {
-            final String contentType = probeContentType(resolve);
-            exchange.sendResponseHeaders(200, Files.size(resolve));
-            exchange.getResponseHeaders().add("Content-Type", contentType);
-            try (OutputStream os = exchange.getResponseBody()) {
-                Files.copy(resolve, os);
-            }
-        } else {
-            final String response = "404 Not Found";
-            exchange.sendResponseHeaders(404, response.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(response.getBytes(StandardCharsets.UTF_8));
-            }
-        }
-    }
-
-    /**
      * Open the given url in default system browser.
      *
      * @param url the url
@@ -366,12 +325,17 @@ public class Commands {
             try {
                 Desktop.getDesktop().browse(url);
             } catch (UnsupportedOperationException e) {
-                LOGGER.error("Browse operation is not supported on your platform."
-                             + "You can use the link below to open the report manually.", e);
+                LOGGER.error(
+                        "Browse operation is not supported on your platform. "
+                                + "You can use the link below to open the report manually.",
+                        e
+                );
             }
         } else {
-            LOGGER.error("Can not open browser because this capability is not supported on "
-                         + "your platform. You can use the link below to open the report manually.");
+            LOGGER.error(
+                    "Can not open browser because this capability is not supported on "
+                            + "your platform. You can use the link below to open the report manually."
+            );
         }
     }
 
@@ -383,6 +347,5 @@ public class Commands {
             return false;
         }
     }
-
 
 }

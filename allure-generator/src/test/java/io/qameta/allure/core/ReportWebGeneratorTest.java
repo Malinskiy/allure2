@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,25 @@
  */
 package io.qameta.allure.core;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.ConfigurationBuilder;
+import io.qameta.allure.Description;
+import io.qameta.allure.PluginConfiguration;
+import io.qameta.allure.ReportStorage;
+import io.qameta.allure.plugin.DefaultPlugin;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,38 +42,110 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ReportWebGeneratorTest {
 
-    @SetEnvironmentVariable(key = "ALLURE_NO_ANALYTICS", value = "true")
+    /**
+     * Verifies referencing hashed directory assets for web report generation.
+     */
+    @Description
     @Test
-    void shouldDisableAnalytics(@TempDir final Path tempDirectory) {
+    void shouldReferenceHashedDirectoryAssets(@TempDir final Path tempDirectory) {
         final Configuration configuration = ConfigurationBuilder.empty().build();
-        final InMemoryReportStorage reportStorage = new InMemoryReportStorage();
-        new ReportWebGenerator()
-                .generate(
-                        configuration,
-                        reportStorage,
-                        tempDirectory
-                );
+
+        generateReport(configuration, new FileSystemReportStorage(tempDirectory), tempDirectory);
 
         final Path indexHtml = tempDirectory.resolve("index.html");
 
         assertThat(indexHtml)
                 .isRegularFile()
                 .content(StandardCharsets.UTF_8)
-                .doesNotContain("googletagmanager");
+                .contains("<script src=\"assets/")
+                .contains("assets/")
+                .doesNotContain("type=\"module\"")
+                .doesNotContain("type=\"importmap\"")
+                .doesNotContain("app.js")
+                .doesNotContain("styles.css");
     }
 
+    /**
+     * Verifies disabling analytics for web report generation.
+     */
+    @Description
+    @SetEnvironmentVariable(
+            key = "ALLURE_NO_ANALYTICS",
+            value = "true"
+    )
+    @Test
+    void shouldDisableAnalytics(@TempDir final Path tempDirectory) {
+        final Configuration configuration = ConfigurationBuilder.empty().build();
+        final InMemoryReportStorage reportStorage = new InMemoryReportStorage();
+        generateReport(configuration, reportStorage, tempDirectory);
+
+        final Path indexHtml = tempDirectory.resolve("index.html");
+
+        assertThat(indexHtml)
+                .isRegularFile()
+                .content(StandardCharsets.UTF_8)
+                .doesNotContain("googletagmanager")
+                .doesNotContain("G-FVWC4GKEYS")
+                .doesNotContain("dataLayer");
+    }
+
+    /**
+     * Verifies that a hostile {@code reportName} containing live HTML / JS
+     * is HTML-escaped rather than rendered raw into the {@code <title>} tag.
+     */
+    @Description
+    @Test
+    void shouldEscapeHtmlInReportName(@TempDir final Path tempDirectory) {
+        final String hostile = "<script>alert('xss')</script>";
+        final Configuration configuration = ConfigurationBuilder.empty()
+                .withReportName(hostile)
+                .build();
+        final InMemoryReportStorage reportStorage = new InMemoryReportStorage();
+        generateReport(configuration, reportStorage, tempDirectory);
+
+        final Path indexHtml = tempDirectory.resolve("index.html");
+
+        assertThat(indexHtml)
+                .isRegularFile()
+                .content(StandardCharsets.UTF_8)
+                .as("hostile reportName must not appear as live HTML in the generated report")
+                .doesNotContain(hostile);
+    }
+
+    /**
+     * Verifies that a hostile {@code reportLanguage} containing live HTML
+     * cannot escape the {@code lang} attribute on the root {@code <html>} tag.
+     */
+    @Description
+    @Test
+    void shouldEscapeHtmlInReportLanguage(@TempDir final Path tempDirectory) {
+        final String hostile = "en\"><script>alert('xss')</script>";
+        final Configuration configuration = ConfigurationBuilder.empty()
+                .withReportLanguage(hostile)
+                .build();
+        final InMemoryReportStorage reportStorage = new InMemoryReportStorage();
+        generateReport(configuration, reportStorage, tempDirectory);
+
+        final Path indexHtml = tempDirectory.resolve("index.html");
+
+        assertThat(indexHtml)
+                .isRegularFile()
+                .content(StandardCharsets.UTF_8)
+                .as("hostile reportLanguage must not break out of the lang attribute")
+                .doesNotContain(hostile);
+    }
+
+    /**
+     * Verifies setting language for web report generation.
+     */
+    @Description
     @Test
     void shouldSetLanguage(@TempDir final Path tempDirectory) {
         final Configuration configuration = ConfigurationBuilder.empty()
                 .withReportLanguage("xyz")
                 .build();
         final InMemoryReportStorage reportStorage = new InMemoryReportStorage();
-        new ReportWebGenerator()
-                .generate(
-                        configuration,
-                        reportStorage,
-                        tempDirectory
-                );
+        generateReport(configuration, reportStorage, tempDirectory);
 
         final Path indexHtml = tempDirectory.resolve("index.html");
 
@@ -71,17 +155,16 @@ class ReportWebGeneratorTest {
                 .contains("lang=\"xyz\"");
     }
 
+    /**
+     * Verifies setting default language if not provided for web report generation.
+     */
+    @Description
     @Test
     void shouldSetDefaultLanguageIfNotProvided(@TempDir final Path tempDirectory) {
         final Configuration configuration = ConfigurationBuilder.empty()
                 .build();
         final InMemoryReportStorage reportStorage = new InMemoryReportStorage();
-        new ReportWebGenerator()
-                .generate(
-                        configuration,
-                        reportStorage,
-                        tempDirectory
-                );
+        generateReport(configuration, reportStorage, tempDirectory);
 
         final Path indexHtml = tempDirectory.resolve("index.html");
 
@@ -89,5 +172,108 @@ class ReportWebGeneratorTest {
                 .isRegularFile()
                 .content(StandardCharsets.UTF_8)
                 .contains("lang=\"en\"");
+    }
+
+    /**
+     * Verifies inlining hashed scripts in single file mode for web report generation.
+     */
+    @Description
+    @Test
+    void shouldInlineHashedScriptsInSingleFileMode(@TempDir final Path tempDirectory) {
+        final Configuration configuration = ConfigurationBuilder.empty().build();
+        final InMemoryReportStorage reportStorage = new InMemoryReportStorage();
+
+        generateReport(configuration, reportStorage, tempDirectory);
+
+        final Path indexHtml = tempDirectory.resolve("index.html");
+
+        assertThat(indexHtml)
+                .isRegularFile()
+                .content(StandardCharsets.UTF_8)
+                .contains("window.__allureCoreLoaded")
+                .contains("data:text/javascript; charset=utf-8;base64,")
+                .doesNotContain("type=\"module\"")
+                .doesNotContain("type=\"importmap\"");
+    }
+
+    /**
+     * Verifies embedding undeclared plugin static files in single file mode for web report generation.
+     *
+     * @throws IOException if plugin fixture files could not be written.
+     */
+    @Description
+    @Test
+    void shouldInlinePluginStaticFilesAsReportDataInSingleFileMode(
+                                                                   @TempDir final Path tempDirectory)
+            throws IOException {
+        final Path pluginDirectory = tempDirectory.resolve("screen-diff-plugin");
+        final Path pluginStaticDirectory = pluginDirectory.resolve("static");
+        final Path outputDirectory = tempDirectory.resolve("report");
+        final String script = "console.log('screen-diff');";
+        final String stylesheet = ".screen-diff {}";
+
+        Files.createDirectories(pluginStaticDirectory);
+        Files.writeString(
+                pluginStaticDirectory.resolve("index.js"),
+                script,
+                StandardCharsets.UTF_8
+        );
+        Files.writeString(pluginStaticDirectory.resolve("styles.css"), stylesheet, StandardCharsets.UTF_8);
+
+        final PluginConfiguration pluginConfiguration = new PluginConfiguration()
+                .setId("screen-diff");
+        final Configuration configuration = ConfigurationBuilder.empty()
+                .withPlugins(
+                        List.of(
+                                new DefaultPlugin(
+                                        pluginConfiguration,
+                                        Collections.emptyList(),
+                                        pluginDirectory
+                                )
+                        )
+                )
+                .build();
+
+        generateReport(configuration, new InMemoryReportStorage(), outputDirectory);
+
+        final Path indexHtml = outputDirectory.resolve("index.html");
+        final String encodedScript = Base64.getEncoder()
+                .encodeToString(script.getBytes(StandardCharsets.UTF_8));
+        final String encodedStylesheet = Base64.getEncoder()
+                .encodeToString(stylesheet.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(listRelativeFiles(outputDirectory))
+                .containsExactly("index.html");
+        assertThat(indexHtml)
+                .isRegularFile()
+                .content(StandardCharsets.UTF_8)
+                .contains("d('plugin/screen-diff/index.js','" + encodedScript + "')")
+                .contains("d('plugin/screen-diff/styles.css','" + encodedStylesheet + "')");
+    }
+
+    private void generateReport(
+                                final Configuration configuration,
+                                final ReportStorage reportStorage,
+                                final Path outputDirectory) {
+        Allure.step("Generate report web assets into " + outputDirectory, () -> {
+            new ReportWebGenerator().generate(configuration, reportStorage, outputDirectory);
+            final Path indexHtml = outputDirectory.resolve("index.html");
+            Allure.addAttachment(
+                    "Generated index.html",
+                    "text/html",
+                    Files.readString(indexHtml, StandardCharsets.UTF_8)
+            );
+        });
+    }
+
+    private List<String> listRelativeFiles(final Path outputDirectory) throws IOException {
+        try (Stream<Path> files = Files.walk(outputDirectory)) {
+            return files
+                    .filter(Files::isRegularFile)
+                    .map(outputDirectory::relativize)
+                    .map(Path::toString)
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
     }
 }

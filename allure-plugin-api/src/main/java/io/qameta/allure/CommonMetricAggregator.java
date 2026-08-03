@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ public abstract class CommonMetricAggregator implements Aggregator {
     @Override
     public void aggregate(final Configuration configuration,
                           final List<LaunchResults> launchesResults,
-                          final Path outputDirectory) throws IOException {
+                          final Path outputDirectory)
+            throws IOException {
         final Path dataFolder = Files.createDirectories(outputDirectory.resolve(location));
         final Path dataFile = dataFolder.resolve(fileName);
         try (Writer writer = Files.newBufferedWriter(dataFile, StandardCharsets.UTF_8)) {

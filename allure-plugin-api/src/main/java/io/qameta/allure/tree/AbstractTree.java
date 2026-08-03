@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,14 +61,12 @@ public abstract class AbstractTree<T, S extends TreeGroup, U extends TreeLeaf> i
         final TreeLayer layer = classifiers.get(index);
         return layer.getGroupNames().stream()
                 .flatMap(name -> {
-                    // @formatter:off
                     final S child = node.findNodeOfType(name, getRootType())
-                        .orElseGet(() -> {
-                            final S created = groupFactory.create(node, name, item);
-                            node.addChild(created);
-                            return created;
-                        });
-                    // @formatter:on
+                            .orElseGet(() -> {
+                                final S created = groupFactory.create(node, name, item);
+                                node.addChild(created);
+                                return created;
+                            });
                     return getEndNodes(item, child, classifiers, index + 1);
                 });
     }

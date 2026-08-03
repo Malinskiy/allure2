@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -69,11 +69,6 @@ import java.util.UUID;
  * @see Configuration
  * @since 2.0
  */
-@SuppressWarnings({
-        "PMD.ExcessiveImports",
-        "ClassDataAbstractionCoupling",
-        "ClassFanOutComplexity"
-})
 public class ConfigurationBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationBuilder.class);
@@ -153,41 +148,43 @@ public class ConfigurationBuilder {
      */
     @Deprecated
     public ConfigurationBuilder useDefault() {
-        return withExtensions(Arrays.asList(
-                new ReportInfoContext(version, uuid),
-                new JacksonContext(),
-                new MarkdownContext(),
-                new FreemarkerContext(),
-                new RandomUidContext(),
-                new MarkdownDescriptionsPlugin(),
-                new TagsPlugin(),
-                new RetryPlugin(),
-                new RetryTrendPlugin(),
-                new SeverityPlugin(),
-                new OwnerPlugin(),
-                new IdeaLinksPlugin(),
-                new HistoryPlugin(),
-                new HistoryTrendPlugin(),
-                new CategoriesPlugin(),
-                new CategoriesTrendPlugin(),
-                new DurationPlugin(),
-                new DurationTrendPlugin(),
-                new StatusChartPlugin(),
-                new TimelinePlugin(),
-                new SuitesPlugin(),
-                new TestsResultsPlugin(),
-                new AttachmentsPlugin(),
-                new MailPlugin(),
-                new InfluxDbExportPlugin(),
-                new PrometheusExportPlugin(),
-                new SummaryPlugin(),
-                new ExecutorPlugin(),
-                new LaunchPlugin(),
-                new Allure1Plugin(),
-                new Allure1EnvironmentPlugin(),
-                new Allure2Plugin(),
-                new GaPlugin()
-        ));
+        return withExtensions(
+                Arrays.asList(
+                        new ReportInfoContext(version, uuid),
+                        new JacksonContext(),
+                        new MarkdownContext(),
+                        new FreemarkerContext(),
+                        new RandomUidContext(),
+                        new MarkdownDescriptionsPlugin(),
+                        new TagsPlugin(),
+                        new RetryPlugin(),
+                        new RetryTrendPlugin(),
+                        new SeverityPlugin(),
+                        new OwnerPlugin(),
+                        new IdeaLinksPlugin(),
+                        new HistoryPlugin(),
+                        new HistoryTrendPlugin(),
+                        new CategoriesPlugin(),
+                        new CategoriesTrendPlugin(),
+                        new DurationPlugin(),
+                        new DurationTrendPlugin(),
+                        new StatusChartPlugin(),
+                        new TimelinePlugin(),
+                        new SuitesPlugin(),
+                        new TestsResultsPlugin(),
+                        new AttachmentsPlugin(),
+                        new MailPlugin(),
+                        new InfluxDbExportPlugin(),
+                        new PrometheusExportPlugin(),
+                        new SummaryPlugin(),
+                        new ExecutorPlugin(),
+                        new LaunchPlugin(),
+                        new Allure1Plugin(),
+                        new Allure1EnvironmentPlugin(),
+                        new Allure2Plugin(),
+                        new GaPlugin()
+                )
+        );
     }
 
     /**
@@ -208,13 +205,15 @@ public class ConfigurationBuilder {
     public static ConfigurationBuilder empty() {
         final String allureVersion = getVersion();
         return new ConfigurationBuilder(allureVersion)
-                .withExtensions(Arrays.asList(
-                        new ReportInfoContext(allureVersion),
-                        new JacksonContext(),
-                        new MarkdownContext(),
-                        new FreemarkerContext(),
-                        new RandomUidContext()
-                ));
+                .withExtensions(
+                        Arrays.asList(
+                                new ReportInfoContext(allureVersion),
+                                new JacksonContext(),
+                                new MarkdownContext(),
+                                new FreemarkerContext(),
+                                new RandomUidContext()
+                        )
+                );
     }
 
     /**
@@ -326,6 +325,5 @@ public class ConfigurationBuilder {
                 .map(Class::getPackage)
                 .map(Package::getImplementationVersion);
     }
-
 
 }

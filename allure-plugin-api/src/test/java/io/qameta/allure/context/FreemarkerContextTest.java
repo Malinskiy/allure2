@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,18 @@
  */
 package io.qameta.allure.context;
 
+import io.qameta.allure.Description;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FreemarkerContextTest {
 
+    /**
+     * Verifies that the FreeMarker context creates a usable template configuration.
+     * The test checks that consumers receive a non-null context value.
+     */
+    @Description
     @Test
     void shouldCreateFreemarkerContext() {
         final FreemarkerContext context = new FreemarkerContext();

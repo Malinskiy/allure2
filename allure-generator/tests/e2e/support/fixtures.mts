@@ -1,0 +1,152 @@
+export const REPORT_MODES = {
+  SINGLE_FILE: "single-file",
+  DIRECTORY: "directory",
+} as const;
+
+export type ReportMode = (typeof REPORT_MODES)[keyof typeof REPORT_MODES];
+
+const sharedTopLevelTabs = [
+  "Overview",
+  "Categories",
+  "Suites",
+  "Behaviors",
+  "Packages",
+  "Graphs",
+  "Timeline",
+] as const;
+
+export const fixtures = {
+  uiDemo: {
+    name: "ui-demo",
+    totalTestCases: "20",
+    topLevelTabs: sharedTopLevelTabs,
+    cases: {
+      failedPullRequest: "Creating new issue for authorized user",
+      passedPullRequest: "Deleting existing issue for authorized user",
+      flakyNewFailedIssue: "Adding note to advertisement",
+      retriesStatusChangeIssue: "Closing new issue for authorized user",
+      newPassedIssue: "Creating new issue authorized user",
+      statusDetailsHtmlTags: "renders html-like status details as text",
+    },
+    behaviors: {
+      epic: "Repository collaboration",
+      feature: "Pull Requests",
+      story: "Create new pull request",
+    },
+    categories: {
+      group: "Product defects",
+      statusMessage: "Element not found",
+    },
+    packages: {
+      root: "io.qameta.allure",
+      className: "PullRequestsWebTest",
+    },
+    widgets: {
+      behaviors: "Features by stories",
+      categories: "Categories",
+      environment: "Environment",
+      executors: "Executors",
+      suites: "Suites",
+      summary: "Allure Demo Report",
+      trend: "Trend",
+    },
+    graphs: [
+      "Status",
+      "Severity",
+      "Duration",
+      "Trend",
+      "Duration trend",
+      "Retries trend",
+      "Categories trend",
+    ],
+    htmlAttachmentName: "Page",
+    htmlAttachmentStep: "Open pull requests page `allure-framework/allure2`",
+    expectedStatusDetailsHtmlTags: "<input>, <textarea>, <select>",
+  },
+  detectedLinks: {
+    name: "detected-links",
+    caseName: "renders detected links safely",
+  },
+  attachments: {
+    name: "attachments",
+    caseName: "attachmentsInStep",
+    attachments: {
+      csv: "text/csv",
+      css: "text/css",
+      imageDiff: "application/vnd.allure.image.diff",
+      http: "HTTP Exchange",
+      httpAlias: "HTTP Exchange MIME alias",
+      httpBinary: "HTTP Exchange binary",
+      httpForm: "HTTP Exchange form",
+      httpImage: "HTTP Exchange image",
+      httpMultipart: "HTTP Exchange multipart",
+      httpStream: "HTTP Exchange stream",
+      htmlInteractive: "text/html interactive",
+      htmlInvalid: "text/html invalid",
+      jpeg: "image/jpeg",
+      json: "application/json",
+      png: "image/png",
+      svg: "image/svg+xml",
+      tsv: "text/tab-separated-values",
+      uri: "text/uri-list",
+      video: "video/webm",
+      xml: "application/xml",
+    },
+    uriLinks: {
+      docs: "https://allurereport.org/docs/attachments/",
+      graphs: "./index.html#/graphs",
+    },
+    steps: {
+      csv: "text/csv",
+      css: "text/css",
+      imageDiff: "application/vnd.allure.image.diff",
+      http: "HTTP Exchange",
+      httpAlias: "HTTP Exchange MIME alias",
+      httpBinary: "HTTP Exchange binary",
+      httpForm: "HTTP Exchange form",
+      httpImage: "HTTP Exchange image",
+      httpMultipart: "HTTP Exchange multipart",
+      httpStream: "HTTP Exchange stream",
+      htmlInteractive: "text/html interactive",
+      htmlInvalid: "text/html invalid",
+      jpeg: "image/jpeg",
+      json: "application/json",
+      png: "image/png",
+      svg: "image/svg+xml",
+      tsv: "text/tab-separated-values",
+      uri: "text/uri-list",
+      video: "video/webm",
+      xml: "application/xml",
+    },
+  },
+  screenDiff: {
+    name: "screen-diff",
+    caseName: "buttons",
+    blockTitle: "Screen Diff",
+    attachments: {
+      banner: "Onboarding banner diff",
+      checkout: "Checkout summary diff",
+      metrics: "Release metrics diff",
+    },
+    steps: {
+      banner: "Capture onboarding banner diff payload",
+      checkout: "Capture checkout summary diff payload",
+      metrics: "Capture release metrics diff payload",
+    },
+  },
+  playwrightTrace: {
+    name: "playwright-trace",
+    caseName: "opens playwright trace attachment",
+    attachmentName: "Playwright trace",
+    stepName: "Record browser trace",
+  },
+  treeLongName: {
+    name: "tree-long-name",
+    caseName:
+      "test_screenshot_default_games_section_with_a_descriptive_name_that_remains_long_enough_to_overflow_the_tree_row_even_on_wide_viewports",
+    parameters: [
+      "session[LivePage]",
+      "frontend.pages.screenshot.default.games.section",
+    ],
+  },
+} as const;

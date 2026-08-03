@@ -14,7 +14,7 @@ val qualityConfigsDir by extra("$gradleScriptDir/quality-configs")
 val spotlessDtr by extra("$qualityConfigsDir/spotless")
 
 tasks.wrapper {
-    gradleVersion = "8.5"
+    gradleVersion = "9.2.1"
 }
 
 plugins {
@@ -50,7 +50,10 @@ group = "io.qameta.allure"
 
 nexusPublishing {
     repositories {
-        sonatype()
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+        }
     }
 }
 
@@ -71,46 +74,39 @@ subprojects {
     apply(plugin = "com.diffplug.spotless")
     apply(plugin = "io.spring.dependency-management")
 
-    val orgSlf4jVersion = "2.0.17"
-    val comSquareupRetrofit2Version = "2.11.0"
-
     dependencyManagement {
         imports {
-            mavenBom("com.fasterxml.jackson:jackson-bom:2.18.3")
-            mavenBom("com.squareup.okhttp3:okhttp-bom:4.12.0")
+            mavenBom("com.fasterxml.jackson:jackson-bom:2.22.1")
+            mavenBom("com.squareup.okhttp3:okhttp-bom:5.4.0")
+            mavenBom("com.squareup.retrofit2:retrofit-bom:3.0.0")
             // latest version that supports java 8
             mavenBom("com.vladsch.flexmark:flexmark-all:0.62.2")
-            mavenBom("io.qameta.allure:allure-bom:2.29.1")
-            mavenBom("org.junit:junit-bom:5.12.0")
+            mavenBom("io.qameta.allure:allure-bom:2.35.3")
+            mavenBom("org.assertj:assertj-bom:3.27.7")
+            mavenBom("org.junit:junit-bom:6.1.1")
+            mavenBom("org.mockito:mockito-bom:5.23.0")
+            mavenBom("org.slf4j:slf4j-bom:2.0.18")
         }
         dependencies {
-            dependency("ch.qos.logback:logback-classic:1.3.15")
             dependency("com.beust:jcommander:1.82")
-            dependency("com.github.spotbugs:spotbugs:4.9.2")
-            dependency("com.opencsv:opencsv:5.9")
-            dependency("com.puppycrawl.tools:checkstyle:10.21.4")
-            dependency("com.squareup.retrofit2:converter-jackson:${comSquareupRetrofit2Version}")
-            dependency("com.squareup.retrofit2:retrofit:${comSquareupRetrofit2Version}")
-            dependency("commons-beanutils:commons-beanutils:1.10.1")
-            dependency("commons-io:commons-io:2.18.0")
+            dependency("com.github.spotbugs:spotbugs:4.10.2")
+            dependency("com.opencsv:opencsv:5.12.0")
+            dependency("com.puppycrawl.tools:checkstyle:12.2.0")
+            dependency("commons-io:commons-io:2.22.0")
             dependency("javax.xml.bind:jaxb-api:2.3.1")
-            dependency("net.sourceforge.pmd:pmd-java:7.11.0")
+            dependency("net.sourceforge.pmd:pmd-java:7.26.0")
             dependency("org.allurefw:allure1-model:1.0")
-            dependency("org.apache.commons:commons-collections4:4.4")
-            dependency("org.apache.commons:commons-lang3:3.17.0")
+            dependency("org.apache.commons:commons-lang3:3.20.0")
             dependency("org.apache.httpcomponents:httpclient:4.5.14")
-            dependency("org.apache.tika:tika-core:2.9.3")
-            dependency("org.assertj:assertj-core:3.27.3")
-            dependency("org.eclipse.jetty:jetty-server:12.0.16")
             dependency("org.freemarker:freemarker:2.3.34")
+            dependency("org.jsoup:jsoup:1.22.2")
             dependency("org.junit-pioneer:junit-pioneer:2.3.0")
-            dependency("org.mockito:mockito-core:5.17.0")
-            dependency("org.projectlombok:lombok:1.18.36")
-            dependency("org.slf4j:slf4j-api:${orgSlf4jVersion}")
-            dependency("org.slf4j:slf4j-nop:${orgSlf4jVersion}")
-            dependency("org.slf4j:slf4j-simple:${orgSlf4jVersion}")
-            dependency("org.zeroturnaround:zt-zip:1.17")
+            dependency("org.projectlombok:lombok:1.18.46")
         }
+    }
+
+    dependencies {
+        add("testAnnotationProcessor", "io.qameta.allure:allure-descriptions-javadoc")
     }
 
     tasks.compileJava {
@@ -139,7 +135,7 @@ subprojects {
         systemProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug")
         systemProperty("allure.model.indentOutput", "true")
         systemProperty("junit.jupiter.execution.parallel.enabled", true)
-        systemProperty("junit.jupiter.execution.parallel.mode.default", true)
+        systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
         testLogging {
             listOf(org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
         }
@@ -161,7 +157,9 @@ subprojects {
         }
     }
 
-    fun excludeGeneratedSources(source: FileTree): FileTree = (source - fileTree("build/generated-sources")).asFileTree
+    fun mainJavaSources(): FileTree = fileTree("src/main/java") {
+        include("**/*.java")
+    }
 
     checkstyle {
         toolVersion = dependencyManagement.managedVersions["com.puppycrawl.tools:checkstyle"]!!
@@ -173,6 +171,7 @@ subprojects {
         ruleSets = listOf()
         ruleSetFiles = rootProject.files("gradle/quality-configs/pmd/pmd.xml")
         targetJdk = TargetJdk.VERSION_1_7
+        isConsoleOutput = true
     }
 
     spotbugs {
@@ -180,15 +179,18 @@ subprojects {
         excludeFilter = rootProject.file("gradle/quality-configs/spotbugs/exclude.xml")
     }
 
-    tasks.withType(Checkstyle::class) {
-        source = excludeGeneratedSources(source)
+    tasks.checkstyleMain {
+        source = mainJavaSources()
+        classpath = files()
     }
 
-    tasks.withType(Pmd::class) {
-        source = excludeGeneratedSources(source)
+    tasks.pmdMain {
+        source = mainJavaSources()
+        classpath = files()
     }
 
-    tasks.withType(SpotBugsTask::class) {
+    tasks.withType<SpotBugsTask>().configureEach {
+        auxClassPaths.from(configurations.named("runtimeClasspath"))
     }
 
     tasks.checkstyleTest {
@@ -209,6 +211,7 @@ subprojects {
             removeUnusedImports()
             importOrder("", "jakarta", "javax", "java", "\\#")
             licenseHeader(file("$spotlessDtr/allure.java.license").readText(UTF_8))
+            eclipse().configFile("$spotlessDtr/eclipse-jdt.prefs")
             endWithNewline()
             replaceRegex("one blank line after package line", "(package .+;)\n+import", "$1\n\nimport")
             replaceRegex("one blank line after import lists", "(import .+;\n\n)\n+", "$1")
@@ -345,8 +348,8 @@ val deleteDemoReport by tasks.creating(Delete::class) {
 val generateDemoReport by tasks.creating(Exec::class) {
     group = "Build"
     dependsOn("deleteDemoReport", "allure-commandline:build")
-    executable = "$root/allure-commandline/build/install/allure/bin/allure"
-    args("generate", "$root/allure-web/test-data/demo", "-o", "$root/build/docker/report")
+    executable = "$root/allure-commandline/build/install/allure-commandline/bin/allure"
+    args("generate", "$root/allure-generator/test-data/demo", "-o", "$root/build/docker/report")
 }
 
 val generateDemoDockerfile by tasks.creating(Dockerfile::class) {

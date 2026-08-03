@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import static io.qameta.allure.tree.TreeUtils.groupByLabels;
  *
  * @since 2.0
  */
-@SuppressWarnings("PMD.UseUtilityClass")
 public class SuitesPlugin extends CompositeAggregator2 {
 
     private static final String SUITES = "suites";
@@ -63,20 +62,19 @@ public class SuitesPlugin extends CompositeAggregator2 {
     protected static final String CSV_FILE_NAME = "suites.csv";
 
     public SuitesPlugin() {
-        super(Arrays.asList(
-                new JsonAggregator(), new CsvExportAggregator(), new WidgetAggregator()
-        ));
+        super(
+                Arrays.asList(
+                        new JsonAggregator(), new CsvExportAggregator(), new WidgetAggregator()
+                )
+        );
     }
 
-    @SuppressWarnings("PMD.DefaultPackage")
     static /* default */ Tree<TestResult> getData(final List<LaunchResults> launchResults) {
 
-        // @formatter:off
         final Tree<TestResult> xunit = new TestResultTree(
                 SUITES,
-            testResult -> groupByLabels(testResult, PARENT_SUITE, SUITE, SUB_SUITE)
+                testResult -> groupByLabels(testResult, PARENT_SUITE, SUITE, SUB_SUITE)
         );
-        // @formatter:on
 
         launchResults.stream()
                 .map(LaunchResults::getResults)

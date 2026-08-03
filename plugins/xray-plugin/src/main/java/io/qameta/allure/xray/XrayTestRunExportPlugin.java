@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -107,11 +107,13 @@ public class XrayTestRunExportPlugin implements Aggregator2 {
         final Map<String, List<XrayTestRun>> testRunsMap = executionIssues.stream()
                 .map(issue -> getTestRunsInTestExecution(jiraService, issue))
                 .flatMap(Collection::stream)
-                .collect(Collectors.groupingBy(
-                        XrayTestRun::getKey,
-                        HashMap::new,
-                        Collectors.toCollection(ArrayList::new)
-                ));
+                .collect(
+                        Collectors.groupingBy(
+                                XrayTestRun::getKey,
+                                HashMap::new,
+                                Collectors.toCollection(ArrayList::new)
+                        )
+                );
 
         final Map<String, String> linkNamePerStatus = new HashMap<>();
         launchesResults.stream()
@@ -134,7 +136,7 @@ public class XrayTestRunExportPlugin implements Aggregator2 {
 
                                 case XRAY_STATUS_PASS:
                                     if (!linkNamePerStatus.containsKey(link.getName())
-                                        || XRAY_STATUS_TODO.equals(linkNamePerStatus.get(link.getName()))) {
+                                            || XRAY_STATUS_TODO.equals(linkNamePerStatus.get(link.getName()))) {
                                         linkNamePerStatus.put(link.getName(), status);
                                     }
                                     break;
@@ -167,8 +169,10 @@ public class XrayTestRunExportPlugin implements Aggregator2 {
                                      final String executionIssueKey,
                                      final ExecutorInfo info) {
         try {
-            final String message = String.format("Execution updated from launch [%s|%s]",
-                    info.getBuildName(), info.getReportUrl());
+            final String message = String.format(
+                    "Execution updated from launch [%s|%s]",
+                    info.getBuildName(), info.getReportUrl()
+            );
             jiraService.createIssueComment(executionIssueKey, new JiraIssueComment().setBody(message));
             LOGGER.debug(String.format("Xray execution '%s' commented successfully", executionIssueKey));
         } catch (Exception e) {
@@ -182,11 +186,19 @@ public class XrayTestRunExportPlugin implements Aggregator2 {
         if (!status.equals(testRun.getStatus())) {
             try {
                 jiraService.updateTestRunStatus(testRun.getId(), status);
-                LOGGER.debug(String.format("Xray testrun '%s' (id: '%s') status updated to '%s' successfully",
-                        testRun.getKey(), testRun.getId(), status));
+                LOGGER.debug(
+                        String.format(
+                                "Xray testrun '%s' (id: '%s') status updated to '%s' successfully",
+                                testRun.getKey(), testRun.getId(), status
+                        )
+                );
             } catch (Exception e) {
-                LOGGER.error(String.format("Xray testrun '%s' (id: '%s') status update failed",
-                        testRun.getKey(), testRun.getId()));
+                LOGGER.error(
+                        String.format(
+                                "Xray testrun '%s' (id: '%s') status update failed",
+                                testRun.getKey(), testRun.getId()
+                        )
+                );
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import io.qameta.allure.entity.Label;
 import io.qameta.allure.entity.Link;
 import io.qameta.allure.entity.TestResult;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,10 +59,11 @@ public class IdeaLinksPlugin implements Aggregator2 {
                           final List<LaunchResults> launchesResults,
                           final ReportStorage storage) {
         if (enabled) {
-            launchesResults.stream()
-                    .map(LaunchResults::getAllResults)
-                    .flatMap(Collection::stream)
-                    .forEach(this::addIdeaLink);
+            for (LaunchResults launchResults : launchesResults) {
+                for (TestResult testResult : launchResults.getAllResults()) {
+                    addIdeaLink(testResult);
+                }
+            }
         }
     }
 

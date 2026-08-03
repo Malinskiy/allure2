@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package io.qameta.allure.jira;
 
+import io.qameta.allure.Allure;
+import io.qameta.allure.Description;
 import io.qameta.allure.core.LaunchResults;
 import io.qameta.allure.entity.Statistic;
 import io.qameta.allure.entity.Status;
@@ -25,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static io.qameta.allure.jira.TestData.createTestResult;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +36,11 @@ import static org.mockito.Mockito.when;
 
 public class JiraExportUtilitiesTest {
 
-
+    /**
+     * Verifies all non-empty status counts are converted to Jira launch statistics.
+     * The test checks status, color, and count values for each Allure status.
+     */
+    @Description
     @Test
     public void testResultsFromLaunchResultsShouldConvertToLaunchStatisticExport() {
         final long resultCount = 1;
@@ -45,30 +52,38 @@ public class JiraExportUtilitiesTest {
         final TestResult unknown = createTestResult(Status.UNKNOWN);
 
         final Set<TestResult> results = new HashSet<>(Arrays.asList(passed, failed, broken, skipped, unknown));
-        when(launchResults.getAllResults()).thenReturn(results);
+        createLaunchResults(launchResults, results);
 
-        final Statistic statistic = JiraExportUtils.getStatistic(Arrays.asList(launchResults));
-        List<LaunchStatisticExport> launchStatisticExports = JiraExportUtils.convertStatistics(statistic);
+        final List<LaunchStatisticExport> launchStatisticExports = convertStatistics(launchResults);
 
         assertThat(launchStatisticExports).isNotEmpty().hasSize(5);
 
         assertThat(launchStatisticExports).extracting(LaunchStatisticExport::getStatus)
-                .contains(Status.PASSED.value(),
+                .contains(
+                        Status.PASSED.value(),
                         Status.FAILED.value(),
                         Status.SKIPPED.value(),
                         Status.BROKEN.value(),
-                        Status.UNKNOWN.value());
+                        Status.UNKNOWN.value()
+                );
 
         assertThat(launchStatisticExports).extracting(LaunchStatisticExport::getColor)
-                .contains(ResultStatus.FAILED.color(),
+                .contains(
+                        ResultStatus.FAILED.color(),
                         ResultStatus.PASSED.color(),
                         ResultStatus.SKIPPED.color(),
                         ResultStatus.BROKEN.color(),
-                        ResultStatus.UNKNOWN.color());
+                        ResultStatus.UNKNOWN.color()
+                );
         launchStatisticExports.forEach(launchStatisticExport -> assertThat(launchStatisticExport.getCount()).isEqualTo(resultCount));
 
     }
 
+    /**
+     * Verifies statuses with zero counts are omitted from Jira launch statistics.
+     * The test checks absent skipped and broken statuses are not exported.
+     */
+    @Description
     @Test
     public void emptyTestResultsShouldBeIgnoredWhenConvertingToLaunchStatisticExport() {
         final long resultCount = 1;
@@ -78,26 +93,65 @@ public class JiraExportUtilitiesTest {
         final TestResult unknown = createTestResult(Status.UNKNOWN);
 
         final Set<TestResult> results = new HashSet<>(Arrays.asList(passed, failed, unknown));
-        when(launchResults.getAllResults()).thenReturn(results);
+        createLaunchResults(launchResults, results);
 
-        final Statistic statistic = JiraExportUtils.getStatistic(Arrays.asList(launchResults));
-        final List<LaunchStatisticExport> launchStatisticExports = JiraExportUtils.convertStatistics(statistic);
+        final List<LaunchStatisticExport> launchStatisticExports = convertStatistics(launchResults);
 
         assertThat(launchStatisticExports).isNotEmpty().hasSize(3);
         assertThat(launchStatisticExports).extracting(LaunchStatisticExport::getStatus)
-                .contains(Status.PASSED.value(),
+                .contains(
+                        Status.PASSED.value(),
                         Status.FAILED.value(),
-                        Status.UNKNOWN.value())
+                        Status.UNKNOWN.value()
+                )
                 .doesNotContain(Status.SKIPPED.value(), Status.BROKEN.value());
 
         assertThat(launchStatisticExports).extracting(LaunchStatisticExport::getColor)
-                .contains(ResultStatus.FAILED.color(),
+                .contains(
+                        ResultStatus.FAILED.color(),
                         ResultStatus.PASSED.color(),
-                        ResultStatus.UNKNOWN.color())
+                        ResultStatus.UNKNOWN.color()
+                )
                 .doesNotContain(ResultStatus.SKIPPED.color(), ResultStatus.BROKEN.color());
 
         launchStatisticExports.forEach(launchStatisticExport -> assertThat(launchStatisticExport.getCount()).isEqualTo(resultCount));
     }
 
+    private void createLaunchResults(final LaunchResults launchResults, final Set<TestResult> results) {
+        Allure.step("Create launch results for Jira statistics", () -> {
+            when(launchResults.getAllResults()).thenReturn(results);
+            Allure.addAttachment("jira-statistic-input.txt", "text/plain", describeResults(results));
+        });
+    }
+
+    private List<LaunchStatisticExport> convertStatistics(final LaunchResults launchResults) {
+        return Allure.step("Convert Jira launch statistics", () -> {
+            final Statistic statistic = JiraExportUtils.getStatistic(Arrays.asList(launchResults));
+            final List<LaunchStatisticExport> exports = JiraExportUtils.convertStatistics(statistic);
+            Allure.addAttachment("jira-statistic-output.txt", "text/plain", describeStatistic(exports));
+            return exports;
+        });
+    }
+
+    private String describeResults(final Set<TestResult> results) {
+        return results.stream()
+                .map(result -> String.format("uid=%s, name=%s, status=%s", result.getUid(), result.getName(), result.getStatus()))
+                .sorted()
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    private String describeStatistic(final List<LaunchStatisticExport> statistic) {
+        return statistic.stream()
+                .map(
+                        item -> String.format(
+                                "status=%s, color=%s, count=%s",
+                                item.getStatus(),
+                                item.getColor(),
+                                item.getCount()
+                        )
+                )
+                .sorted()
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
 
 }

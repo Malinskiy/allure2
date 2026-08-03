@@ -11,7 +11,8 @@
       "name": "Statut"
     },
     "trend": {
-      "empty": "Il n'y a rien à montrer"
+      "empty": "Il n'y a rien à montrer",
+      "reportLink": "Ouvrir le rapport pour {{name}}"
     }
   },
   "component": {
@@ -31,7 +32,9 @@
       "filtered": {
         "shown": "{{count}} montré",
         "total": "{{count}} résultat de test",
-        "total_plural": "{{count}} résultats de test"
+        "total_one": "{{count}} résultat de test",
+        "total_many": "{{count}} résultats de test",
+        "total_other": "{{count}} résultats de test"
       },
       "groups": "Basculer les informations des groupes",
       "time": {
@@ -44,16 +47,34 @@
           "tooltip": "Somme de toutes les durées"
         },
         "total": {
-          "name": "Total",
+          "name": "Total général",
           "tooltip": "Durée depuis le premier test démarré jusqu'au dernier test terminé"
         }
       },
-      "unknown": "<Vide>"
+      "unknown": "<Vide>",
+      "noItemSelected": "Aucun élément sélectionné",
+      "search": "Rechercher des résultats de test"
     },
     "widgetStatus": {
       "showAll": "Montrer tout",
       "total": "{{count}} article au total",
-      "total_plural": "{{count}} articles au total"
+      "total_one": "{{count}} article au total",
+      "total_many": "{{count}} articles au total",
+      "total_other": "{{count}} articles au total"
+    },
+    "attachment": {
+      "download": "Cliquer pour télécharger la pièce jointe",
+      "videoNotSupported": "Votre navigateur ne prend pas en charge la balise vidéo",
+      "htmlPreviewTitle": "Aperçu de la pièce jointe HTML : {{name}}",
+      "previewSizeExceeded": "L'aperçu de la pièce jointe est désactivé, car la pièce jointe dépasse {{size}}.",
+      "htmlPreviewSizeExceeded": "L'aperçu HTML est désactivé, car la pièce jointe dépasse {{size}}.",
+      "htmlPreviewInvalid": "L'aperçu HTML est désactivé, car la pièce jointe ne ressemble pas à du HTML."
+    },
+    "screenDiff": {
+      "empty": "Aucune donnée de comparaison fournie",
+      "name": "Différence d'écran",
+      "showDiff": "Afficher les différences",
+      "showOverlay": "Afficher la superposition"
     }
   },
   "controls": {
@@ -64,11 +85,19 @@
     "collapse": "Plier",
     "expand": "Déplier",
     "fullscreen": "Plein écran",
-    "language": "Changer de langue"
+    "language": "Changer de langue",
+    "languageShort": "Langue",
+    "lightTheme": "Thème clair",
+    "darkTheme": "Thème sombre",
+    "loading": "Chargement...",
+    "close": "Fermer"
   },
   "errors": {
     "missedAttachment": "Pièce jointe non trouvée",
-    "notFound": "Non trouvé"
+    "notFound": "Non trouvé",
+    "loadingFailed": "Échec du chargement des données",
+    "tabNotFound": "Onglet \"{{tab}}\" introuvable",
+    "testResultNotFound": "Résultat de test avec l'uid \"{{uid}}\" introuvable"
   },
   "marks": {
     "flaky": "Instable",
@@ -94,19 +123,28 @@
     "categories": {
       "name": "Catégories"
     },
+    "behaviors": {
+      "name": "Comportements"
+    },
     "graph": {
       "name": "Graphiques"
     },
     "overview": {
       "name": "Aperçu"
     },
+    "packages": {
+      "name": "Paquets"
+    },
     "suites": {
-      "name": "Suites"
+      "name": "Suites de tests"
     },
     "timeline": {
       "name": "Chronologie",
       "selected": "{{count}} test sélectionné ({{percent}}%) avec une durée supérieure à {{duration}}",
-      "selected_plural": "{{count}} tests sélectionnés ({{percent}}%) avec une durée supérieure à {{duration}}"
+      "selected_one": "{{count}} test sélectionné ({{percent}}%) avec une durée supérieure à {{duration}}",
+      "selected_many": "{{count}} tests sélectionnés ({{percent}}%) avec une durée supérieure à {{duration}}",
+      "selected_other": "{{count}} tests sélectionnés ({{percent}}%) avec une durée supérieure à {{duration}}",
+      "resultLink": "Ouvrir le résultat de test {{name}}, statut {{status}}"
     }
   },
   "testResult": {
@@ -114,7 +152,7 @@
       "name": "Catégories"
     },
     "description": {
-      "name": "Description"
+      "name": "Descriptif"
     },
     "duration": {
       "name": "Durée"
@@ -126,7 +164,8 @@
       },
       "name": "Exécution",
       "setup": "Pré exécution",
-      "teardown": "Post exécution"
+      "teardown": "Post exécution",
+      "empty": "Aucune information sur l'exécution du test n'est disponible."
     },
     "history": {
       "empty": "Aucune information à propos de l'historique.",
@@ -153,16 +192,27 @@
       "time": "{{date}} à {{time}}"
     },
     "severity": {
-      "name": "Sévérité"
+      "name": "Sévérité",
+      "blocker": "bloquant",
+      "critical": "critique",
+      "normal": "normale",
+      "minor": "mineure",
+      "trivial": "triviale"
     },
     "stats": {
       "count": {
         "attachments": "{{count}} pièce jointe",
-        "attachments_plural": "{{count}} pièces jointes",
         "parameters": "{{count}} paramètre",
-        "parameters_plural": "{{count}} paramètres",
         "steps": "{{count}} sous-étape",
-        "steps_plural": "{{count}} sous-étapes"
+        "attachments_one": "{{count}} pièce jointe",
+        "attachments_many": "{{count}} pièces jointes",
+        "attachments_other": "{{count}} pièces jointes",
+        "parameters_one": "{{count}} paramètre",
+        "parameters_many": "{{count}} paramètres",
+        "parameters_other": "{{count}} paramètres",
+        "steps_one": "{{count}} sous-étape",
+        "steps_many": "{{count}} sous-étapes",
+        "steps_other": "{{count}} sous-étapes"
       }
     },
     "status": {
@@ -170,12 +220,16 @@
       "trace": "Afficher la trace"
     },
     "tags": {
-      "name": "Tags"
+      "name": "Étiquettes"
     }
   },
   "widget": {
     "categories": {
       "name": "Catégories"
+    },
+    "behaviors": {
+      "name": "Thèmes par histoires",
+      "showAll": "Montrer tout"
     },
     "categoriesTrend": {
       "name": "Tendance des catégories"
@@ -201,14 +255,18 @@
       "name": "Tendance des tentatives"
     },
     "suites": {
-      "name": "Suites"
+      "name": "Suites de tests"
     },
     "summary": {
       "aggregatedName": "Rapport agrégé",
       "launches": "lancement",
-      "launches_plural": "lancements",
       "testResults": "cas de test",
-      "testResults_plural": "cas de test"
+      "launches_one": "lancement",
+      "launches_many": "lancements",
+      "launches_other": "lancements",
+      "testResults_one": "cas de test",
+      "testResults_many": "cas de test",
+      "testResults_other": "cas de test"
     },
     "trend": {
       "name": "Tendance"

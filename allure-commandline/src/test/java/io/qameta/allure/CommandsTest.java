@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ import static org.mockito.Mockito.when;
  */
 class CommandsTest {
 
+    /**
+     * Verifies listing plugins succeeds even when the selected profile has no config file.
+     * The test checks the command returns the no-error exit code.
+     */
+    @Description
     @Test
     void shouldNotFailWhenListPluginsWithoutConfig(@TempDir final Path home) {
         final Commands commands = new Commands(home);
@@ -48,6 +53,11 @@ class CommandsTest {
                 .isEqualTo(ExitCode.NO_ERROR);
     }
 
+    /**
+     * Verifies report generation refuses to overwrite a non-empty report directory by default.
+     * The test checks the command returns a generic error when the output directory already has content.
+     */
+    @Description
     @Test
     void shouldFailIfDirectoryExists(@TempDir final Path temp) throws Exception {
         final Path home = Files.createDirectories(temp.resolve("home"));
@@ -63,6 +73,11 @@ class CommandsTest {
                 .isEqualTo(ExitCode.GENERIC_ERROR);
     }
 
+    /**
+     * Verifies plugin listing reads the selected commandline config profile.
+     * The test checks a valid profile-backed config lets the command finish successfully.
+     */
+    @Description
     @Test
     void shouldListPlugins(@TempDir final Path home) throws Exception {
         createConfig(home, "allure-test.yml");
@@ -76,6 +91,11 @@ class CommandsTest {
                 .isEqualTo(ExitCode.NO_ERROR);
     }
 
+    /**
+     * Verifies commandline configuration loading from the selected profile.
+     * The test checks the expected plugin list is parsed from the profile config file.
+     */
+    @Description
     @Test
     void shouldLoadConfig(@TempDir final Path home) throws Exception {
         createConfig(home, "allure-test.yml");
@@ -85,6 +105,12 @@ class CommandsTest {
 
         final Commands commands = new Commands(home);
         final CommandlineConfig config = commands.getConfig(options);
+        Allure.addAttachment(
+                "loaded-config.txt",
+                "text/plain",
+                String.format("profile=test%nplugins=%s%n", config.getPlugins()),
+                ".txt"
+        );
         assertThat(config)
                 .isNotNull();
 
@@ -93,6 +119,11 @@ class CommandsTest {
                 .containsExactly("a", "b", "c");
     }
 
+    /**
+     * Verifies report generation allows an empty existing output directory.
+     * The test checks generation exits successfully when there are no input results and no existing report files.
+     */
+    @Description
     @Test
     void shouldAllowEmptyReportDirectory(@TempDir final Path temp) throws Exception {
         final Path home = Files.createDirectories(temp.resolve("home"));

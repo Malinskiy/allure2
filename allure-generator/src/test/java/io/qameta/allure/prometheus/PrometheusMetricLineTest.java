@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package io.qameta.allure.prometheus;
 
+import io.qameta.allure.Allure;
+import io.qameta.allure.Description;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -33,16 +35,25 @@ class PrometheusMetricLineTest {
 
     static Stream<Arguments> data() {
         return Stream.of(
-                Arguments.of("evn=\"test\",suite=\"regression\"", "launch_status_passed{evn=\"test\",suite=\"regression\"} 300",
-                        "with labels"),
+                Arguments.of(
+                        "evn=\"test\",suite=\"regression\"", "launch_status_passed{evn=\"test\",suite=\"regression\"} 300",
+                        "with labels"
+                ),
                 Arguments.of(null, "launch_status_passed 300", "without labels")
         );
     }
 
+    /**
+     * Verifies returning metric for Prometheus metric formatting.
+     */
+    @Description
     @ParameterizedTest
     @MethodSource(value = "data")
     void shouldReturnMetric(final String labels, final String expectedMetric) {
+        Allure.parameter("labels", labels);
+        Allure.parameter("expectedMetric", expectedMetric);
         PrometheusMetricLine prometheusMetric = new PrometheusMetricLine(METRIC_NAME, METRIC_KEY, METRIC_VALUE, labels);
-        assertThat(prometheusMetric.asString()).isEqualTo(expectedMetric);
+        final String metric = Allure.step("Render Prometheus metric line", prometheusMetric::asString);
+        assertThat(metric).isEqualTo(expectedMetric);
     }
 }

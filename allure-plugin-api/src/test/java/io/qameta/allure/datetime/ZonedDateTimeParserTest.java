@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.qameta.allure.datetime;
 
+import io.qameta.allure.Description;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -40,6 +41,11 @@ class ZonedDateTimeParserTest {
         );
     }
 
+    /**
+     * Verifies parsing zoned ISO timestamps with UTC and explicit numeric offsets.
+     * Each example checks the timestamp is converted to the expected epoch milliseconds.
+     */
+    @Description
     @ParameterizedTest
     @MethodSource("data")
     void shouldParseZonedDateTime(final String time, final Long expected) {

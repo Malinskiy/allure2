@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import io.qameta.allure.entity.Parameter;
 import io.qameta.allure.entity.Status;
 import io.qameta.allure.entity.TestResult;
 import io.qameta.allure.entity.Time;
+import io.qameta.allure.parser.ClasspathEntityResolver;
 import io.qameta.allure.parser.XmlElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,6 @@ import static java.util.Objects.nonNull;
 /**
  * @author charlie (Dmitry Baev).
  */
-@SuppressWarnings("PMD.ExcessiveImports")
 public class XunitXmlPlugin implements Reader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XunitXmlPlugin.class);
@@ -94,7 +94,9 @@ public class XunitXmlPlugin implements Reader {
         try {
             LOGGER.debug("Parsing file {}", parsedFile);
             final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setValidating(false);
             final DocumentBuilder builder = factory.newDocumentBuilder();
+            builder.setEntityResolver(new ClasspathEntityResolver());
             final Document document = builder.parse(parsedFile.toFile());
             final XmlElement assembliesElement = new XmlElement(document.getDocumentElement());
             final String elementName = assembliesElement.getName();

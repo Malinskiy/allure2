@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,8 +31,10 @@ public class TestResultTree extends AbstractTree<TestResult, TestResultTreeGroup
     public TestResultTree(final String name, final TreeClassifier<TestResult> treeClassifier,
                           final TreeGroupFactory<TestResult, TestResultTreeGroup> groupFactory,
                           final TreeLeafFactory<TestResult, TestResultTreeGroup, TestResultTreeLeaf> leafFactory) {
-        super(new TestResultTreeGroup(createGroupUid(null, name), name),
-                treeClassifier, groupFactory, leafFactory);
+        super(
+                new TestResultTreeGroup(createGroupUid(null, name), name),
+                treeClassifier, groupFactory, leafFactory
+        );
     }
 
     public String getUid() {

@@ -8,13 +8,18 @@
       "name": "Ausmaß"
     },
     "status": {
-      "name": "Status"
+      "name": "Zustand"
     },
     "trend": {
-      "empty": "Hier gibt es nichts zu zeigen"
+      "empty": "Hier gibt es nichts zu zeigen",
+      "reportLink": "Bericht für {{name}} öffnen"
     }
   },
   "component": {
+    "markToggle": {
+      "hideCases": "Verstecke mit {{mark}} markierte Testergebnisse",
+      "showCases": "Zeige mit {{mark}} markierte Testergebnisse"
+    },
     "statusToggle": {
       "hideCases": "Verstecke Testergebnisse mit Status {{status}}",
       "showCases": "Zeige Testergebnisse mit Status {{status}}"
@@ -23,15 +28,17 @@
       "download": "CSV herunterladen",
       "empty": "Keine Einträge verfügbar",
       "filter": "Filtere Testfälle nach Status",
+      "filter-marks": "Markierungen",
       "filtered": {
         "shown": "{{count}} angezeigt",
         "total": "{{count}} Testergebnis",
-        "total_plural": "{{count}} Testergebnisse"
+        "total_one": "{{count}} Testergebnis",
+        "total_other": "{{count}} Testergebnisse"
       },
       "groups": "Gruppeninformationen an- / ausschalten",
       "time": {
         "max": {
-          "name": "Max",
+          "name": "Maximum",
           "tooltip": "Längste Testdauer"
         },
         "sum": {
@@ -43,12 +50,29 @@
           "tooltip": "Dauer vom Start des ersten bis zum Ende des letzten Tests"
         }
       },
-      "unknown": "<Leer>"
+      "unknown": "<Leer>",
+      "noItemSelected": "Kein Eintrag ausgewählt",
+      "search": "Testergebnisse suchen"
     },
     "widgetStatus": {
       "showAll": "Zeige alle",
       "total": "{{count}} Eintrag insgesamt",
-      "total_plural": "{{count}} Einträge insgesamt"
+      "total_one": "{{count}} Eintrag insgesamt",
+      "total_other": "{{count}} Einträge insgesamt"
+    },
+    "attachment": {
+      "download": "Klicken, um den Anhang herunterzuladen",
+      "videoNotSupported": "Ihr Browser unterstützt das Video-Tag nicht",
+      "htmlPreviewTitle": "HTML-Anhangsvorschau: {{name}}",
+      "previewSizeExceeded": "Die Anhangsvorschau ist deaktiviert, weil der Anhang größer als {{size}} ist.",
+      "htmlPreviewSizeExceeded": "Die HTML-Vorschau ist deaktiviert, weil der Anhang größer als {{size}} ist.",
+      "htmlPreviewInvalid": "Die HTML-Vorschau ist deaktiviert, weil der Anhang nicht wie HTML aussieht."
+    },
+    "screenDiff": {
+      "empty": "Keine Diff-Daten vorhanden",
+      "name": "Bildschirmvergleich",
+      "showDiff": "Diff anzeigen",
+      "showOverlay": "Überlagerung anzeigen"
     }
   },
   "controls": {
@@ -59,11 +83,19 @@
     "collapse": "Verkleinern",
     "expand": "Vergrößern",
     "fullscreen": "Vollbild",
-    "language": "Sprache ändern"
+    "language": "Sprache ändern",
+    "languageShort": "Sprache",
+    "lightTheme": "Helles Design",
+    "darkTheme": "Dunkles Design",
+    "loading": "Laden...",
+    "close": "Schließen"
   },
   "errors": {
     "missedAttachment": "Anhang nicht gefunden",
-    "notFound": "Nicht gefunden"
+    "notFound": "Nicht gefunden",
+    "loadingFailed": "Daten konnten nicht geladen werden",
+    "tabNotFound": "Tab \"{{tab}}\" nicht gefunden",
+    "testResultNotFound": "Testergebnis mit uid \"{{uid}}\" nicht gefunden"
   },
   "marks": {
     "flaky": "Instabil",
@@ -89,11 +121,17 @@
     "categories": {
       "name": "Kategorien"
     },
+    "behaviors": {
+      "name": "Verhalten"
+    },
     "graph": {
       "name": "Grafiken"
     },
     "overview": {
       "name": "Übersicht"
+    },
+    "packages": {
+      "name": "Pakete"
     },
     "suites": {
       "name": "Suiten"
@@ -101,7 +139,9 @@
     "timeline": {
       "name": "Zeitstrahl",
       "selected": "{{count}} Test ausgewählt ({{percent}}%) mit einer Dauer von über {{duration}}",
-      "selected_plural": "{{count}} Tests ausgewählt ({{percent}}%) mit einer Dauer von über {{duration}}"
+      "selected_one": "{{count}} Test ausgewählt ({{percent}}%) mit einer Dauer von über {{duration}}",
+      "selected_other": "{{count}} Tests ausgewählt ({{percent}}%) mit einer Dauer von über {{duration}}",
+      "resultLink": "Testergebnis {{name}} öffnen, Status {{status}}"
     }
   },
   "testResult": {
@@ -116,16 +156,23 @@
     },
     "execution": {
       "body": "Test",
+      "downloadAttachment": {
+        "tooltip": "Anhang in neuem Tab öffnen"
+      },
       "name": "Durchführung",
       "setup": "Vorbereitung",
-      "teardown": "Aufräumung"
+      "teardown": "Aufräumung",
+      "empty": "Keine Informationen zur Testausführung verfügbar."
     },
     "history": {
+      "empty": "Keine Historie verfügbar.",
       "name": "Historie",
-      "successRate": "Erfolgsrate"
+      "statistic": "{{passed}} von {{total}}",
+      "successRate": "Erfolgsrate",
+      "time": "{{date}} um {{time}}"
     },
     "links": {
-      "name": "Links"
+      "name": "Verweise"
     },
     "overview": {
       "name": "Übersicht"
@@ -138,19 +185,28 @@
     },
     "retries": {
       "empty": "Keine Informationen zu Wiederholungen verfügbar",
-      "name": "Wiederholungen"
+      "name": "Wiederholungen",
+      "time": "{{date}} um {{time}}"
     },
     "severity": {
-      "name": "Ausmaß"
+      "name": "Ausmaß",
+      "blocker": "Blocker",
+      "critical": "kritisch",
+      "normal": "gewöhnlich",
+      "minor": "gering",
+      "trivial": "geringfügig"
     },
     "stats": {
       "count": {
         "attachments": "{{count}} Anhang",
-        "attachments_plural": "{{count}} Anhänge",
         "parameters": "{{count}} Parameter",
-        "parameters_plural": "{{count}} Parameter",
         "steps": "{{count}} Unterschritt",
-        "steps_plural": "{{count}} Unterschritte"
+        "attachments_one": "{{count}} Anhang",
+        "attachments_other": "{{count}} Anhänge",
+        "parameters_one": "{{count}} Parameter",
+        "parameters_other": "{{count}} Parameter",
+        "steps_one": "{{count}} Unterschritt",
+        "steps_other": "{{count}} Unterschritte"
       }
     },
     "status": {
@@ -158,12 +214,16 @@
       "trace": "Zeige Stracktrace"
     },
     "tags": {
-      "name": "Tags"
+      "name": "Schlagwörter"
     }
   },
   "widget": {
     "categories": {
       "name": "Kategorien"
+    },
+    "behaviors": {
+      "name": "Features nach Stories",
+      "showAll": "Zeige alle"
     },
     "categoriesTrend": {
       "name": "Kategorien Trend"
@@ -194,12 +254,14 @@
     "summary": {
       "aggregatedName": "Aggregierter Report",
       "launches": "Durchlauf",
-      "launches_plural": "Durchläufe",
       "testResults": "Testfall",
-      "testResults_plural": "Testfälle"
+      "launches_one": "Durchlauf",
+      "launches_other": "Durchläufe",
+      "testResults_one": "Testfall",
+      "testResults_other": "Testfälle"
     },
     "trend": {
-      "name": "Trend"
+      "name": "Tendenz"
     }
   }
 }

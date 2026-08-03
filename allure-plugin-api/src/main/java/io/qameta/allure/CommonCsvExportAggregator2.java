@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,8 +57,7 @@ public abstract class CommonCsvExportAggregator2<T> implements Aggregator2 {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try (Writer writer = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
             final StatefulBeanToCsvBuilder<T> builder = new StatefulBeanToCsvBuilder<>(writer);
-            final HeaderColumnNameMappingStrategy<T> mappingStrategy =
-                    new HeaderColumnNameMappingStrategyBuilder<T>().build();
+            final HeaderColumnNameMappingStrategy<T> mappingStrategy = new HeaderColumnNameMappingStrategyBuilder<T>().build();
             mappingStrategy.setType(type);
             final StatefulBeanToCsv<T> beanWriter = builder.withMappingStrategy(mappingStrategy).build();
             try {

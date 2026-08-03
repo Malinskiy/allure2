@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package io.qameta.allure.tags;
 
+import io.qameta.allure.Allure;
 import io.qameta.allure.ConfigurationBuilder;
 import io.qameta.allure.DefaultLaunchResults;
+import io.qameta.allure.Description;
 import io.qameta.allure.ReportStorage;
 import io.qameta.allure.core.Configuration;
 import io.qameta.allure.core.LaunchResults;
@@ -38,26 +40,32 @@ import static org.mockito.Mockito.mock;
  */
 class TagsPluginTest {
 
+    /**
+     * Verifies adding tags from labels for tag aggregation.
+     */
+    @Description
     @Test
     void shouldAddTagsFromLabels() {
         final TestResult testResult = new TestResult()
-                .setLabels(Arrays.asList(
-                        new Label()
-                                .setName("not a tag")
-                                .setValue("some value"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("first"),
-                        new Label()
-                                .setName("feature")
-                                .setValue("Auth"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("second"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("third")
-                ));
+                .setLabels(
+                        Arrays.asList(
+                                new Label()
+                                        .setName("not a tag")
+                                        .setValue("some value"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("first"),
+                                new Label()
+                                        .setName("feature")
+                                        .setValue("Auth"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("second"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("third")
+                        )
+                );
 
         final List<LaunchResults> launchResults = List.of(
                 new DefaultLaunchResults(Set.of(testResult), Map.of(), Map.of())
@@ -67,11 +75,7 @@ class TagsPluginTest {
 
         final ReportStorage storage = mock();
 
-        new TagsPlugin().aggregate(
-                configuration,
-                launchResults,
-                storage
-        );
+        aggregateTags(configuration, launchResults, storage);
 
         assertThat(testResult.<Set<String>>getExtraBlock(TagsPlugin.TAGS_BLOCK_NAME))
                 .containsExactlyInAnyOrder(
@@ -81,32 +85,38 @@ class TagsPluginTest {
                 );
     }
 
+    /**
+     * Verifies removing duplicate tags for tag aggregation.
+     */
+    @Description
     @Test
     void shouldRemoveDuplicateTags() {
         final TestResult testResult = new TestResult()
-                .setLabels(Arrays.asList(
-                        new Label()
-                                .setName("not a tag")
-                                .setValue("some value"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("first"),
-                        new Label()
-                                .setName("feature")
-                                .setValue("Auth"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("first"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("second"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("    first    "),
-                        new Label()
-                                .setName("tag")
-                                .setValue("third")
-                ));
+                .setLabels(
+                        Arrays.asList(
+                                new Label()
+                                        .setName("not a tag")
+                                        .setValue("some value"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("first"),
+                                new Label()
+                                        .setName("feature")
+                                        .setValue("Auth"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("first"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("second"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("    first    "),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("third")
+                        )
+                );
 
         final List<LaunchResults> launchResults = List.of(
                 new DefaultLaunchResults(Set.of(testResult), Map.of(), Map.of())
@@ -116,11 +126,7 @@ class TagsPluginTest {
 
         final ReportStorage storage = mock();
 
-        new TagsPlugin().aggregate(
-                configuration,
-                launchResults,
-                storage
-        );
+        aggregateTags(configuration, launchResults, storage);
 
         assertThat(testResult.<Set<String>>getExtraBlock(TagsPlugin.TAGS_BLOCK_NAME))
                 .containsExactlyInAnyOrder(
@@ -130,26 +136,32 @@ class TagsPluginTest {
                 );
     }
 
+    /**
+     * Verifies trimming tag names for tag aggregation.
+     */
+    @Description
     @Test
     void shouldTrimTagNames() {
         final TestResult testResult = new TestResult()
-                .setLabels(Arrays.asList(
-                        new Label()
-                                .setName("not a tag")
-                                .setValue("some value"),
-                        new Label()
-                                .setName("tag")
-                                .setValue(" first  \n "),
-                        new Label()
-                                .setName("feature")
-                                .setValue("Auth"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("  second"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("third")
-                ));
+                .setLabels(
+                        Arrays.asList(
+                                new Label()
+                                        .setName("not a tag")
+                                        .setValue("some value"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue(" first  \n "),
+                                new Label()
+                                        .setName("feature")
+                                        .setValue("Auth"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("  second"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("third")
+                        )
+                );
 
         final List<LaunchResults> launchResults = List.of(
                 new DefaultLaunchResults(Set.of(testResult), Map.of(), Map.of())
@@ -159,11 +171,7 @@ class TagsPluginTest {
 
         final ReportStorage storage = mock();
 
-        new TagsPlugin().aggregate(
-                configuration,
-                launchResults,
-                storage
-        );
+        aggregateTags(configuration, launchResults, storage);
 
         assertThat(testResult.<Set<String>>getExtraBlock(TagsPlugin.TAGS_BLOCK_NAME))
                 .containsExactlyInAnyOrder(
@@ -173,25 +181,31 @@ class TagsPluginTest {
                 );
     }
 
+    /**
+     * Verifies parsing labels without name for tag aggregation.
+     */
+    @Description
     @Test
     void shouldParseLabelsWithoutName() {
         final TestResult testResult = new TestResult()
-                .setLabels(Arrays.asList(
-                        new Label()
-                                .setValue("some value"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("first"),
-                        new Label()
-                                .setName("feature")
-                                .setValue("Auth"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("second"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("third")
-                ));
+                .setLabels(
+                        Arrays.asList(
+                                new Label()
+                                        .setValue("some value"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("first"),
+                                new Label()
+                                        .setName("feature")
+                                        .setValue("Auth"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("second"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("third")
+                        )
+                );
 
         final List<LaunchResults> launchResults = List.of(
                 new DefaultLaunchResults(Set.of(testResult), Map.of(), Map.of())
@@ -201,11 +215,7 @@ class TagsPluginTest {
 
         final ReportStorage storage = mock();
 
-        new TagsPlugin().aggregate(
-                configuration,
-                launchResults,
-                storage
-        );
+        aggregateTags(configuration, launchResults, storage);
 
         assertThat(testResult.<Set<String>>getExtraBlock(TagsPlugin.TAGS_BLOCK_NAME))
                 .containsExactlyInAnyOrder(
@@ -215,21 +225,27 @@ class TagsPluginTest {
                 );
     }
 
+    /**
+     * Verifies parsing labels without value for tag aggregation.
+     */
+    @Description
     @Test
     void shouldParseLabelsWithoutValue() {
         final TestResult testResult = new TestResult()
-                .setLabels(Arrays.asList(
-                        new Label()
-                                .setName("tag"),
-                        new Label()
-                                .setName("feature"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("second"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("third")
-                ));
+                .setLabels(
+                        Arrays.asList(
+                                new Label()
+                                        .setName("tag"),
+                                new Label()
+                                        .setName("feature"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("second"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("third")
+                        )
+                );
 
         final List<LaunchResults> launchResults = List.of(
                 new DefaultLaunchResults(Set.of(testResult), Map.of(), Map.of())
@@ -239,11 +255,7 @@ class TagsPluginTest {
 
         final ReportStorage storage = mock();
 
-        new TagsPlugin().aggregate(
-                configuration,
-                launchResults,
-                storage
-        );
+        aggregateTags(configuration, launchResults, storage);
 
         assertThat(testResult.<Set<String>>getExtraBlock(TagsPlugin.TAGS_BLOCK_NAME))
                 .containsExactlyInAnyOrder(
@@ -252,35 +264,41 @@ class TagsPluginTest {
                 );
     }
 
+    /**
+     * Verifies adding meta tags for tag aggregation.
+     */
+    @Description
     @Test
     void shouldAddMetaTags() {
         final TestResult testResult = new TestResult()
-                .setLabels(Arrays.asList(
-                        new Label()
-                                .setName("not a tag")
-                                .setValue("some value"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("first"),
-                        new Label()
-                                .setName("feature")
-                                .setValue("Auth"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("second"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("@allure.label.story=Some_story"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("@allure.label.parentSuite:Regression"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("@allure.label.suite:Search_Articles"),
-                        new Label()
-                                .setName("tag")
-                                .setValue("allure.label.subSuite=Mobile")
-                ));
+                .setLabels(
+                        Arrays.asList(
+                                new Label()
+                                        .setName("not a tag")
+                                        .setValue("some value"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("first"),
+                                new Label()
+                                        .setName("feature")
+                                        .setValue("Auth"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("second"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("@allure.label.story=Some_story"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("@allure.label.parentSuite:Regression"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("@allure.label.suite:Search_Articles"),
+                                new Label()
+                                        .setName("tag")
+                                        .setValue("allure.label.subSuite=Mobile")
+                        )
+                );
 
         final List<LaunchResults> launchResults = List.of(
                 new DefaultLaunchResults(Set.of(testResult), Map.of(), Map.of())
@@ -290,11 +308,7 @@ class TagsPluginTest {
 
         final ReportStorage storage = mock();
 
-        new TagsPlugin().aggregate(
-                configuration,
-                launchResults,
-                storage
-        );
+        aggregateTags(configuration, launchResults, storage);
 
         assertThat(testResult.getLabels())
                 .extracting(Label::getName, Label::getValue)
@@ -312,5 +326,15 @@ class TagsPluginTest {
                         tuple("suite", "Search Articles"),
                         tuple("subSuite", "Mobile")
                 );
+    }
+
+    private void aggregateTags(
+                               final Configuration configuration,
+                               final List<LaunchResults> launchResults,
+                               final ReportStorage storage) {
+        Allure.step(
+                "Aggregate tags for " + launchResults.get(0).getAllResults().size() + " test result(s)",
+                () -> new TagsPlugin().aggregate(configuration, launchResults, storage)
+        );
     }
 }

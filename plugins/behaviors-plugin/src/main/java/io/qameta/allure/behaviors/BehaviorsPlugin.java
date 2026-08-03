@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ import static io.qameta.allure.tree.TreeUtils.groupByLabels;
  *
  * @since 2.0
  */
-@SuppressWarnings({"PMD.ExcessiveImports", "PMD.UseUtilityClass"})
 public class BehaviorsPlugin extends CompositeAggregator2 {
 
     protected static final String BEHAVIORS = "behaviors";
@@ -62,24 +61,22 @@ public class BehaviorsPlugin extends CompositeAggregator2 {
 
     protected static final String CSV_FILE_NAME = "behaviors.csv";
 
-    @SuppressWarnings("PMD.DefaultPackage")
     /* default */ static final LabelName[] LABEL_NAMES = {EPIC, FEATURE, STORY};
 
     public BehaviorsPlugin() {
-        super(Arrays.asList(
-                new JsonAggregator(), new CsvExportAggregator(), new WidgetAggregator()
-        ));
+        super(
+                Arrays.asList(
+                        new JsonAggregator(), new CsvExportAggregator(), new WidgetAggregator()
+                )
+        );
     }
 
-    @SuppressWarnings("PMD.DefaultPackage")
     /* default */ static Tree<TestResult> getData(final List<LaunchResults> launchResults) {
 
-        // @formatter:off
         final Tree<TestResult> behaviors = new TestResultTree(
-            BEHAVIORS,
-            testResult -> groupByLabels(testResult, LABEL_NAMES)
+                BEHAVIORS,
+                testResult -> groupByLabels(testResult, LABEL_NAMES)
         );
-        // @formatter:on
 
         launchResults.stream()
                 .map(LaunchResults::getResults)

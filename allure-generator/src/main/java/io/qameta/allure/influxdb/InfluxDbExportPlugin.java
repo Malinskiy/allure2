@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,17 +39,14 @@ public class InfluxDbExportPlugin extends CommonMetricAggregator2 {
     @Override
     public List<Metric> getMetrics() {
         final long timestamp = TimeUnit.SECONDS.toNanos(Instant.now().getEpochSecond());
-        final StatusMetric statusMetric = new StatusMetric((status, count) ->
-                new InfluxDbMetricLine("launch_status", status.value(), String.valueOf(count), timestamp));
+        final StatusMetric statusMetric = new StatusMetric((status, count) -> new InfluxDbMetricLine("launch_status", status.value(), String.valueOf(count), timestamp));
 
-        final TimeMetric timeMetric = new TimeMetric((key, time) ->
-                new InfluxDbMetricLine("launch_time", key, String.valueOf(time), timestamp));
+        final TimeMetric timeMetric = new TimeMetric((key, time) -> new InfluxDbMetricLine("launch_time", key, String.valueOf(time), timestamp));
 
-        final CategoriesMetric categoriesMetric = new CategoriesMetric((category, count) ->
-                new InfluxDbMetricLine("launch_problems", category, String.valueOf(count), timestamp));
+        final CategoriesMetric categoriesMetric = new CategoriesMetric((category, count) -> new InfluxDbMetricLine("launch_problems", category, String.valueOf(count), timestamp));
 
-        final RetryMetric retryMetric = new RetryMetric((key, count) ->
-                new InfluxDbMetricLine("launch_retries", key, String.valueOf(count), timestamp)
+        final RetryMetric retryMetric = new RetryMetric(
+                (key, count) -> new InfluxDbMetricLine("launch_retries", key, String.valueOf(count), timestamp)
         );
 
         return Arrays.asList(
@@ -59,6 +56,5 @@ public class InfluxDbExportPlugin extends CommonMetricAggregator2 {
                 retryMetric
         );
     }
-
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public interface Summarizable {
     @JsonProperty
     default boolean isAttachmentStep() {
         return getStepsCount() == 0
-               && getAttachmentsCount() == 1
-               && Objects.equals(getName(), getAttachments().get(0).getName());
+                && getAttachmentsCount() == 1
+                && Objects.equals(getName(), getAttachments().get(0).getName());
     }
 }

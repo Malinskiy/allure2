@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ public class RetryTrendPlugin extends AbstractTrendPlugin<RetryTrendItem> {
         return Optional.ofNullable(mapper.treeToValue(child, RetryTrendItem.class));
     }
 
-    @SuppressWarnings("PMD.DefaultPackage")
     /* default */ static List<RetryTrendItem> getData(final List<LaunchResults> launchesResults) {
         final RetryTrendItem item = createCurrent(launchesResults);
         final List<RetryTrendItem> data = getHistoryItems(launchesResults);

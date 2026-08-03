@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ public class HistoryTrendPlugin extends AbstractTrendPlugin<HistoryTrendItem> {
         return Optional.ofNullable(mapper.treeToValue(child, HistoryTrendItem.class));
     }
 
-    @SuppressWarnings("PMD.DefaultPackage")
     /* default */ static List<HistoryTrendItem> getData(final List<LaunchResults> launchesResults) {
         final HistoryTrendItem item = createCurrent(launchesResults);
         final List<HistoryTrendItem> data = getHistoryItems(launchesResults);

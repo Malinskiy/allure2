@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016-2024 Qameta Software Inc
+ *  Copyright 2016-2026 Qameta Software Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import io.qameta.allure.model.FixtureResult;
 import io.qameta.allure.model.StepResult;
 import io.qameta.allure.model.TestResult;
 import io.qameta.allure.model.TestResultContainer;
+import io.qameta.allure.util.HtmlSanitizerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -54,10 +56,12 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static io.qameta.allure.detect.WellKnownFileExtensionsUtils.getExtensionByMimeType;
 import static io.qameta.allure.entity.LabelName.RESULT_FORMAT;
 import static io.qameta.allure.model.Parameter.Mode.HIDDEN;
 import static io.qameta.allure.model.Parameter.Mode.MASKED;
@@ -74,12 +78,11 @@ import static java.util.Objects.nonNull;
  *
  * @since 2.0
  */
-@SuppressWarnings({
-        "ClassDataAbstractionCoupling",
-        "ClassFanOutComplexity",
-        "PMD.ExcessiveImports",
-        "PMD.TooManyMethods",
-})
+@SuppressWarnings(
+    {
+            "PMD.TooManyMethods",
+    }
+)
 public class Allure2Plugin implements Reader {
 
     @SuppressWarnings("WeakerAccess")
@@ -87,14 +90,15 @@ public class Allure2Plugin implements Reader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Allure2Plugin.class);
 
+    private static final Pattern ATTACHMENT_SOURCE_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]{1,100}$");
+
     private static final Comparator<StageResult> BY_START = comparing(
             StageResult::getTime,
             nullsLast(comparing(Time::getStart, nullsLast(naturalOrder())))
     );
 
-    private static final Comparator<Parameter> PARAMETER_COMPARATOR =
-            comparing(Parameter::getName, nullsFirst(naturalOrder()))
-                    .thenComparing(Parameter::getValue, nullsFirst(naturalOrder()));
+    private static final Comparator<Parameter> PARAMETER_COMPARATOR = comparing(Parameter::getName, nullsFirst(naturalOrder()))
+            .thenComparing(Parameter::getValue, nullsFirst(naturalOrder()));
 
     private final ObjectMapper mapper = JsonMapper.builder()
             .enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME)
@@ -127,12 +131,14 @@ public class Allure2Plugin implements Reader {
         sortByStart(afters);
 
         readTestResults(resultsDirectory)
-                .forEach(result -> convert(
-                        context.getValue(),
-                        resultsDirectory, visitor,
-                        result,
-                        befores, afters
-                ));
+                .forEach(
+                        result -> convert(
+                                context.getValue(),
+                                resultsDirectory, visitor,
+                                result,
+                                befores, afters
+                        )
+                );
     }
 
     private static void sortByStart(final Map<String, List<StageResult>> befores) {
@@ -187,7 +193,7 @@ public class Allure2Plugin implements Reader {
         dest.setName(firstNonNull(result.getName(), result.getFullName(), "Unknown test"));
         dest.setTime(Time.create(result.getStart(), result.getStop()));
         dest.setDescription(result.getDescription());
-        dest.setDescriptionHtml(result.getDescriptionHtml());
+        dest.setDescriptionHtml(sanitizeDescriptionHtml(result.getDescriptionHtml()));
         dest.setStatus(convert(result.getStatus()));
         Optional.ofNullable(result.getStatusDetails()).ifPresent(details -> {
             dest.setStatusMessage(details.getMessage());
@@ -228,7 +234,7 @@ public class Allure2Plugin implements Reader {
                 .setStatus(convert(result.getStatus()))
                 .setSteps(convertList(result.getSteps(), step -> convert(source, visitor, step)))
                 .setDescription(result.getDescription())
-                .setDescriptionHtml(result.getDescriptionHtml())
+                .setDescriptionHtml(sanitizeDescriptionHtml(result.getDescriptionHtml()))
                 .setAttachments(convertList(result.getAttachments(), attach -> convert(source, visitor, attach)))
                 .setParameters(convertList(result.getParameters(), p -> !HIDDEN.equals(p.getMode()), this::convert));
         Optional.of(result)
@@ -264,18 +270,33 @@ public class Allure2Plugin implements Reader {
     private Attachment convert(final Path source,
                                final ResultsVisitor visitor,
                                final io.qameta.allure.model.Attachment attachment) {
-        final Path attachmentFile = source.resolve(attachment.getSource());
-        if (Files.isRegularFile(attachmentFile)) {
+        final String attachmentSource = attachment.getSource();
+        if (!isValidAttachmentFileName(attachmentSource)) {
+            visitor.error("Invalid attachment source is provided: " + attachmentSource);
+            return new Attachment()
+                    .setType(attachment.getType())
+                    .setName(attachment.getName())
+                    .setSize(0L);
+        }
+        final Path normalizedSource = source.normalize();
+        final Path attachmentFile = normalizedSource.resolve(attachmentSource).normalize();
+
+        if (attachmentFile.startsWith(normalizedSource)
+                && Files.isRegularFile(attachmentFile, LinkOption.NOFOLLOW_LINKS)) {
             final Attachment found = visitor.visitAttachmentFile(attachmentFile);
             if (nonNull(attachment.getType())) {
                 found.setType(attachment.getType());
+                final String ext = getExtensionByMimeType(attachment.getType());
+                if (!ext.isEmpty()) {
+                    found.setSource(found.getUid() + "." + ext);
+                }
             }
             if (nonNull(attachment.getName())) {
                 found.setName(attachment.getName());
             }
             return found;
         } else {
-            visitor.error("Could not find attachment " + attachment.getSource() + " in directory " + source);
+            visitor.error("Could not find attachment " + attachmentSource + " in directory " + normalizedSource);
             return new Attachment()
                     .setType(attachment.getType())
                     .setName(attachment.getName())
@@ -337,17 +358,21 @@ public class Allure2Plugin implements Reader {
                                      final ResultsVisitor visitor,
                                      final TestResult result) {
         final StageResult testStage = new StageResult();
-        testStage.setSteps(convertList(
-                result.getSteps(),
-                step -> convert(source, visitor, step)
-        ));
-        testStage.setAttachments(convertList(
-                result.getAttachments(),
-                attachment -> convert(source, visitor, attachment)
-        ));
+        testStage.setSteps(
+                convertList(
+                        result.getSteps(),
+                        step -> convert(source, visitor, step)
+                )
+        );
+        testStage.setAttachments(
+                convertList(
+                        result.getAttachments(),
+                        attachment -> convert(source, visitor, attachment)
+                )
+        );
         testStage.setStatus(convert(result.getStatus()));
         testStage.setDescription(result.getDescription());
-        testStage.setDescriptionHtml(result.getDescriptionHtml());
+        testStage.setDescriptionHtml(sanitizeDescriptionHtml(result.getDescriptionHtml()));
         Optional.of(result)
                 .map(TestResult::getStatusDetails)
                 .ifPresent(statusDetails -> {
@@ -361,14 +386,20 @@ public class Allure2Plugin implements Reader {
         return !result.getSteps().isEmpty() || !result.getAttachments().isEmpty();
     }
 
+    private String sanitizeDescriptionHtml(final String source) {
+        return HtmlSanitizerUtils.sanitizeHtml(source);
+    }
+
     @SafeVarargs
     private static <T> T firstNonNull(final T... items) {
         return Stream.of(items)
                 .filter(Objects::nonNull)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "firstNonNull method should have at least one non null parameter"
-                ));
+                .orElseThrow(
+                        () -> new IllegalStateException(
+                                "firstNonNull method should have at least one non null parameter"
+                        )
+                );
     }
 
     private Stream<TestResultContainer> readTestResultsContainers(final Path resultsDirectory) {
@@ -415,5 +446,10 @@ public class Allure2Plugin implements Reader {
             LOGGER.error("Could not list files in directory {}", directory, e);
             return Stream.empty();
         }
+    }
+
+    private static boolean isValidAttachmentFileName(final String fileName) {
+        return nonNull(fileName) && ATTACHMENT_SOURCE_PATTERN.matcher(fileName).matches();
+
     }
 }
